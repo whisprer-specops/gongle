@@ -67,11 +67,6 @@ def create_account():
         user = User.query.filter_by(email=email).first()
         if user:
             session['user_id'] = user.id
-            # Check if the user has claimed the bonus for their current page
-            bonus = Bonus.query.filter_by(user_id=user.id, page=f'page{user.current_page}').first()
-            if bonus and user.current_page < 6:  # If bonus claimed and not on the last page, move to next page
-                user.current_page += 1
-                db.session.commit()
             return jsonify({'success': True, 'message': 'Logged in', 'current_page': user.current_page})
 
         new_user = User(email=email, points=0, current_page=1)
@@ -89,20 +84,6 @@ def create_account():
         return jsonify({'success': True, 'message': 'Account created', 'current_page': new_user.current_page})
     except Exception as e:
         print(f"Error in create_account: {str(e)}")
-        print(traceback.format_exc())
-        return jsonify({'error': f'Server error: {str(e)}'}), 500
-
-@app.route('/api/get_sold_data', methods=['GET'])
-def get_sold_data():
-    try:
-        if 'user_id' not in session:
-            return jsonify({'error': 'Not logged in'}), 401
-        user_id = session['user_id']
-        sold_data = DataSold.query.filter_by(user_id=user_id).all()
-        sold_types = [data.data_type for data in sold_data]
-        return jsonify({'success': True, 'sold_data': sold_types})
-    except Exception as e:
-        print(f"Error in get_sold_data: {str(e)}")
         print(traceback.format_exc())
         return jsonify({'error': f'Server error: {str(e)}'}), 500
 
@@ -145,7 +126,7 @@ def sell_data():
             'favorite_childhood_memory': 50, 'pet_name': 50, 'favorite_sport': 50,
             'favorite_date_activity': 50, 'favorite_school_subject': 50,
             'favorite_sex_position': 1000, 'favorite_jolly_rancher_color': 1000,
-            'current_video_game_addiction': 1000, 'surprise_data': 1000
+            'current_video_game_addiction': 1000
         }
 
         if type == 'ip_address':
@@ -190,7 +171,7 @@ def claim_bonus():
 
         user = User.query.get(user_id)
         user.points += points
-        if page != 'page6':
+        if page != 'page6':  # Updated to handle Page 6
             user.current_page += 1
         bonus = Bonus(user_id=user_id, page=page, points=points)
         db.session.add(bonus)
