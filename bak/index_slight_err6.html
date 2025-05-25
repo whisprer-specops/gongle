@@ -487,8 +487,7 @@
                             } else if (manual) {
                                 alert('Invalid coordinates format.');
                             }
-                        },
-                        { timeout: 10000 } // Add timeout to prevent hanging
+                        }
                     );
                     return;
                 }
@@ -528,20 +527,7 @@
                 })
                 .catch(error => {
                     console.error('Error in sendSellRequest:', error);
-                    // Mock a successful response for local testing
-                    soldData.add(type);
-                    const currentPoints = parseInt(document.getElementById('points').textContent) || 0;
-                    document.getElementById('points').textContent = currentPoints + points;
-                    const button = document.querySelector(`button.data-btn[data-type="${type}"]`);
-                    if (button) {
-                        button.disabled = true;
-                    } else {
-                        console.error(`Button not found for type: ${type}`);
-                    }
-                    alert(`Sold ${name} for ${points} points! Worthless, but shiny! (Local mock)`);
-                    checkPageCompletion();
-                    fetchLeaderboard();
-                    logSessionData();
+                    alert('Failed to sell data. Check console.');
                 });
             } catch (error) {
                 console.error('Error in sendSellRequest:', error);

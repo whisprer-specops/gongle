@@ -67,8 +67,9 @@ def create_account():
         user = User.query.filter_by(email=email).first()
         if user:
             session['user_id'] = user.id
+            # Check if the user has claimed the bonus for their current page
             bonus = Bonus.query.filter_by(user_id=user.id, page=f'page{user.current_page}').first()
-            if bonus and user.current_page < 6:
+            if bonus and user.current_page < 6:  # If bonus claimed and not on the last page, move to next page
                 user.current_page += 1
                 db.session.commit()
             return jsonify({'success': True, 'message': 'Logged in', 'current_page': user.current_page})
@@ -115,29 +116,6 @@ def sell_data():
         type = data.get('type')
         value = data.get('value')
 
-        # Auto-collect server-side data if not already sold
-        auto_collect_types = {
-            'ip_address': request.remote_addr,
-            'user_agent': request.headers.get('User-Agent', 'Unknown'),
-            'http_accept': request.headers.get('Accept', 'Unknown'),
-            'http_accept_language': request.headers.get('Accept-Language', 'Unknown'),
-            'http_accept_encoding': request.headers.get('Accept-Encoding', 'Unknown'),
-            'http_referer': request.headers.get('Referer', 'Unknown'),
-            'proxy_x_forwarded': request.headers.get('X-Forwarded-For', 'None'),
-            'proxy_via': request.headers.get('Via', 'None'),
-        }
-        auto_points = {
-            'ip_address': 10, 'user_agent': 5, 'http_accept': 5, 'http_accept_language': 5,
-            'http_accept_encoding': 5, 'http_referer': 10, 'proxy_x_forwarded': 15, 'proxy_via': 15
-        }
-        user = User.query.get(user_id)
-        for auto_type, auto_value in auto_collect_types.items():
-            if not DataSold.query.filter_by(user_id=user_id, data_type=auto_type).first():
-                data_sold = DataSold(user_id=user_id, data_type=auto_type, data_value=auto_value, points=auto_points.get(auto_type, 0))
-                user.points += auto_points.get(auto_type, 0)
-                db.session.add(data_sold)
-
-        # Handle the requested data sale
         if DataSold.query.filter_by(user_id=user_id, data_type=type).first():
             return jsonify({'error': 'You already sold that, greedy!'}), 400
 
@@ -167,18 +145,19 @@ def sell_data():
             'favorite_childhood_memory': 50, 'pet_name': 50, 'favorite_sport': 50,
             'favorite_date_activity': 50, 'favorite_school_subject': 50,
             'favorite_sex_position': 1000, 'favorite_jolly_rancher_color': 1000,
-            'current_video_game_addiction': 1000, 'surprise_data': 1000,
-            'browser_details': 10, 'screen_size': 10, 'plugins': 15, 'canvas_fingerprint': 20
+            'current_video_game_addiction': 1000, 'surprise_data': 1000
         }
 
-        if type in auto_collect_types:
-            value = auto_collect_types[type]
+        if type == 'ip_address':
+            value = request.remote_addr
 
         data_sold = DataSold(user_id=user_id, data_type=type, data_value=value, points=points_map.get(type, 0))
+        user = User.query.get(user_id)
         user.points += points_map.get(type, 0)
         db.session.add(data_sold)
         db.session.commit()
 
+        # Handle travel_destinations as a list
         if type == 'travel_destinations':
             try:
                 destinations = value.split(',')
@@ -193,55 +172,6 @@ def sell_data():
         return jsonify({'success': True, 'points': user.points})
     except Exception as e:
         print(f"Error in sell_data: {str(e)}")
-        print(traceback.format_exc())
-        return jsonify({'error': f'Server error: {str(e)}'}), 500
-
-@app.route('/api/collect_client_data', methods=['POST'])
-def collect_client_data():
-    try:
-        if 'user_id' not in session:
-            return jsonify({'error': 'Not logged in'}), 401
-        user_id = session['user_id']
-        data = request.json
-        user = User.query.get(user_id)
-        points_added = 0
-
-        # Collect browser details
-        browser_details = data.get('browser_details')
-        if browser_details and not DataSold.query.filter_by(user_id=user_id, data_type='browser_details').first():
-            data_sold = DataSold(user_id=user_id, data_type='browser_details', data_value=browser_details, points=10)
-            user.points += 10
-            points_added += 10
-            db.session.add(data_sold)
-
-        # Collect screen size
-        screen_size = data.get('screen_size')
-        if screen_size and not DataSold.query.filter_by(user_id=user_id, data_type='screen_size').first():
-            data_sold = DataSold(user_id=user_id, data_type='screen_size', data_value=screen_size, points=10)
-            user.points += 10
-            points_added += 10
-            db.session.add(data_sold)
-
-        # Collect plugins
-        plugins = data.get('plugins')
-        if plugins and not DataSold.query.filter_by(user_id=user_id, data_type='plugins').first():
-            data_sold = DataSold(user_id=user_id, data_type='plugins', data_value=plugins, points=15)
-            user.points += 15
-            points_added += 15
-            db.session.add(data_sold)
-
-        # Collect canvas fingerprint
-        canvas_fingerprint = data.get('canvas_fingerprint')
-        if canvas_fingerprint and not DataSold.query.filter_by(user_id=user_id, data_type='canvas_fingerprint').first():
-            data_sold = DataSold(user_id=user_id, data_type='canvas_fingerprint', data_value=canvas_fingerprint, points=20)
-            user.points += 20
-            points_added += 20
-            db.session.add(data_sold)
-
-        db.session.commit()
-        return jsonify({'success': True, 'points': user.points, 'points_added': points_added})
-    except Exception as e:
-        print(f"Error in collect_client_data: {str(e)}")
         print(traceback.format_exc())
         return jsonify({'error': f'Server error: {str(e)}'}), 500
 
@@ -355,6 +285,7 @@ def leaderboard():
                     socials[data.data_type] = data.data_value
             result.append({'name': user.email, 'points': user.points, 'socials': socials})
 
+        # Add fake bot users
         bot_names = ['BotMaster3000', 'DataHoarderX', 'PointKing999', 'ShadowCollector']
         for bot in bot_names:
             result.append({'name': bot, 'points': random.randint(50000, 100000), 'socials': {}})

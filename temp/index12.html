@@ -93,7 +93,7 @@
         </div>
         <div>How much of you will you sell today?</div>
         <div class="buttons">
-            <button class="btn" id="enterGongleBtn">Enter Gongle</button>
+            <button class="btn" onclick="showConsent()">Enter Gongle</button>
         </div>
     </div>
 
@@ -244,13 +244,6 @@
             <button class="btn" onclick="hidePopup()">Close</button>
         </div>
 
-        <!-- Popup for Auto-Collected Data -->
-        <div class="popup" id="autoCollectPopup">
-            <h3>We Grabbed More of You!</h3>
-            <p>We auto-collected some shiny data from your browser and server connection for <span id="autoPoints">0</span> points! You're a star! 🌟</p>
-            <button class="btn" onclick="hideAutoCollectPopup()">Thanks, Gongle!</button>
-        </div>
-
         <h3>Leaderboard</h3>
         <ul id="leaderboard" class="leaderboard"></ul>
     </div>
@@ -260,16 +253,6 @@
         let currentPage = 1;
         let soldData = new Set();
         let sessionStart = new Date();
-
-        // Bind the "Enter Gongle" button event
-        document.addEventListener('DOMContentLoaded', function() {
-            const enterGongleBtn = document.getElementById('enterGongleBtn');
-            if (enterGongleBtn) {
-                enterGongleBtn.addEventListener('click', showConsent);
-            } else {
-                console.error('Enter Gongle button not found!');
-            }
-        });
 
         function showConsent() {
             console.log('showConsent called');
@@ -301,83 +284,6 @@
             } catch (error) {
                 console.error('Error in agree:', error);
                 alert('Error! Check console.');
-            }
-        }
-
-        function collectClientData() {
-            console.log('collectClientData called');
-            try {
-                // Browser details
-                const browserDetails = `${navigator.appName} ${navigator.appVersion} (${navigator.platform})`;
-
-                // Screen size
-                const screenSize = `${screen.width}x${screen.height}x${screen.colorDepth} (avail: ${window.screen.availWidth}x${window.screen.availHeight})`;
-
-                // Plugins
-                let plugins = [];
-                if (navigator.plugins && navigator.plugins.length) {
-                    for (let i = 0; i < navigator.plugins.length; i++) {
-                        const plugin = navigator.plugins[i];
-                        plugins.push(`${plugin.name} (${plugin.filename})`);
-                    }
-                }
-                const pluginsString = plugins.join('; ');
-
-                // Canvas fingerprint
-                let canvasFingerprint = 'N/A';
-                try {
-                    const canvas = document.createElement('canvas');
-                    const ctx = canvas.getContext('2d');
-                    ctx.textBaseline = 'top';
-                    ctx.font = '14px Arial';
-                    ctx.fillStyle = '#f60';
-                    ctx.fillRect(125, 1, 62, 20);
-                    ctx.fillStyle = '#069';
-                    ctx.fillText('Gongle fingerprint', 2, 15);
-                    ctx.fillStyle = 'rgba(102, 204, 0, 0.7)';
-                    ctx.fillText('Gongle fingerprint', 4, 17);
-                    canvasFingerprint = canvas.toDataURL();
-                    const hash = btoa(canvasFingerprint).substring(0, 32); // Simple hash for storage
-                    canvasFingerprint = hash;
-                } catch (e) {
-                    console.error('Error generating canvas fingerprint:', e);
-                }
-
-                // Send to server
-                fetch('/api/collect_client_data', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        browser_details: browserDetails,
-                        screen_size: screenSize,
-                        plugins: pluginsString,
-                        canvas_fingerprint: canvasFingerprint
-                    })
-                })
-                .then(res => res.json())
-                .then(data => {
-                    if (data.success) {
-                        document.getElementById('points').textContent = data.points;
-                        if (data.points_added > 0) {
-                            document.getElementById('autoPoints').textContent = data.points_added;
-                            document.getElementById('autoCollectPopup').classList.add('active');
-                        }
-                    }
-                })
-                .catch(error => {
-                    console.error('Error in collectClientData:', error);
-                });
-            } catch (error) {
-                console.error('Error in collectClientData:', error);
-            }
-        }
-
-        function hideAutoCollectPopup() {
-            console.log('hideAutoCollectPopup called');
-            try {
-                document.getElementById('autoCollectPopup').classList.remove('active');
-            } catch (error) {
-                console.error('Error in hideAutoCollectPopup:', error);
             }
         }
 
@@ -430,8 +336,6 @@
                                         }
                                     });
                                 sessionStart = new Date();
-                                // Collect client-side data after login
-                                collectClientData();
                             })
                             .catch(error => {
                                 console.error('Error fetching sold data:', error);
@@ -487,8 +391,7 @@
                             } else if (manual) {
                                 alert('Invalid coordinates format.');
                             }
-                        },
-                        { timeout: 10000 } // Add timeout to prevent hanging
+                        }
                     );
                     return;
                 }
@@ -512,6 +415,7 @@
                     if (data.success) {
                         soldData.add(type);
                         document.getElementById('points').textContent = data.points;
+                        // Find the button using the data-type attribute
                         const button = document.querySelector(`button.data-btn[data-type="${type}"]`);
                         if (button) {
                             button.disabled = true;
@@ -528,20 +432,7 @@
                 })
                 .catch(error => {
                     console.error('Error in sendSellRequest:', error);
-                    // Mock a successful response for local testing
-                    soldData.add(type);
-                    const currentPoints = parseInt(document.getElementById('points').textContent) || 0;
-                    document.getElementById('points').textContent = currentPoints + points;
-                    const button = document.querySelector(`button.data-btn[data-type="${type}"]`);
-                    if (button) {
-                        button.disabled = true;
-                    } else {
-                        console.error(`Button not found for type: ${type}`);
-                    }
-                    alert(`Sold ${name} for ${points} points! Worthless, but shiny! (Local mock)`);
-                    checkPageCompletion();
-                    fetchLeaderboard();
-                    logSessionData();
+                    alert('Failed to sell data. Check console.');
                 });
             } catch (error) {
                 console.error('Error in sendSellRequest:', error);
@@ -815,6 +706,42 @@
                 console.error('Error in logSessionData:', error);
             }
         }
+
+        // Trigger daily popup randomly
+        setInterval(() => {
+            if (Math.random() < 0.1) {
+                showSurprisePopup();
+            }
+        }, 60000);
+
+        // Trigger pop-up dailies
+        setInterval(() => {
+            if (Math.random() < 0.2) {
+                const dailyTypes = ['favorite_childhood_memory', 'pet_name', 'favorite_sport', 'favorite_date_activity', 'favorite_school_subject'];
+                const type = dailyTypes[Math.floor(Math.random() * dailyTypes.length)];
+                const value = prompt(`Daily Bonus! Share your ${type.replace('_', ' ')} for 50 points!`);
+                if (value) {
+                    fetch('/api/sell', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ type, value })
+                    })
+                    .then(res => res.json())
+                    .then(data => {
+                        if (data.success) {
+                            document.getElementById('points').textContent = data.points;
+                            const button = document.querySelector(`button.data-btn[data-type="${type}"]`);
+                            if (button) button.disabled = true;
+                            soldData.add(type);
+                            alert(`Sold your ${type.replace('_', ' ')} for 50 points!`);
+                            fetchLeaderboard();
+                            logSessionData();
+                        }
+                    })
+                    .catch(error => console.error('Error in daily sell:', error));
+                }
+            }
+        }, 300000);
     </script>
 </body>
 </html>
