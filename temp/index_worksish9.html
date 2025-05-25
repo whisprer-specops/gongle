@@ -213,15 +213,6 @@
                         document.getElementById('username').textContent = email;
                         document.getElementById('emailForm').classList.remove('active');
                         document.getElementById('dashboard').classList.add('active');
-
-                        // Set currentPage from server response
-                        currentPage = data.current_page || 1;
-                        console.log('Setting currentPage to:', currentPage);
-                        const pageNames = ['Basic Info', 'Mid-Tier Info', 'High-Value Info', 'Extreme Info'];
-                        document.getElementById('currentPage').textContent = pageNames[currentPage - 1];
-                        document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
-                        document.getElementById(`page${currentPage}`).classList.add('active');
-
                         fetchLeaderboard();
                         checkPageCompletion();
                         fetch('/api/daily_bonus', { method: 'POST' })

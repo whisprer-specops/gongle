@@ -58,7 +58,7 @@ def create_account():
         user = User.query.filter_by(email=email).first()
         if user:
             session['user_id'] = user.id
-            return jsonify({'success': True, 'message': 'Logged in', 'current_page': user.current_page})
+            return jsonify({'success': True, 'message': 'Logged in'})
 
         new_user = User(email=email, points=0, current_page=1)
         db.session.add(new_user)
@@ -72,7 +72,7 @@ def create_account():
         db.session.commit()
         print("Awarded 50 points for email")
 
-        return jsonify({'success': True, 'message': 'Account created', 'current_page': new_user.current_page})
+        return jsonify({'success': True, 'message': 'Account created'})
     except Exception as e:
         print(f"Error in create_account: {str(e)}")
         print(traceback.format_exc())
@@ -95,10 +95,7 @@ def sell_data():
             'ip_address': 10, 'browser': 5, 'location': 20, 'favorite_food': 60, 'favorite_movie': 70,
             'phone_number': 100, 'twitter_handle': 80, 'instagram_username': 85,
             'credit_card_last4': 200, 'medical_conditions': 500, 'week_location': 500,
-            'ssn_full': 10000, 'dna_results': 1000, 'bank_account': 3000,
-            'first_pet': 2000, 'mothers_maiden': 2500, 'street_grew_up': 3000,
-            'childhood_friend': 3500, 'others_birthday': 4000, 'favorite_teacher': 4500,
-            'city_born': 5000, 'mothers_city_born': 5000
+            'ssn_full': 10000, 'dna_results': 1000, 'bank_account': 3000
         }
 
         if type == 'ip_address':
@@ -140,26 +137,6 @@ def claim_bonus():
         return jsonify({'success': True, 'points': user.points})
     except Exception as e:
         print(f"Error in claim_bonus: {str(e)}")
-        print(traceback.format_exc())
-        return jsonify({'error': f'Server error: {str(e)}'}), 500
-
-@app.route('/api/social_bonus', methods=['POST'])
-def social_bonus():
-    try:
-        if 'user_id' not in session:
-            return jsonify({'error': 'Not logged in'}), 401
-        user_id = session['user_id']
-        data = request.json
-        page = data.get('page')
-        points = data.get('points')
-
-        user = User.query.get(user_id)
-        user.points += points
-        db.session.commit()
-
-        return jsonify({'success': True, 'points': user.points})
-    except Exception as e:
-        print(f"Error in social_bonus: {str(e)}")
         print(traceback.format_exc())
         return jsonify({'error': f'Server error: {str(e)}'}), 500
 

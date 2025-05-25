@@ -62,8 +62,6 @@
         .progress { margin-bottom: 20px; }
         .bonus-btn { background: #fbbc05; }
         .bonus-btn:hover { background: #e0a800; }
-        .social-btn { background: #9b59b6; color: white; }
-        .social-btn:hover { background: #8e44ad; }
         input[type="text"], input[type="email"] { padding: 5px; margin: 5px; width: 200px; }
         .warning { color: #ea4335; font-weight: bold; }
     </style>
@@ -120,7 +118,6 @@
             <div><input type="text" id="phone_number" placeholder="Phone Number"><button class="data-btn" onclick="sellData('phone_number', 'Phone Number', 100, true)">Phone Number (100 pts)</button></div>
             <div><input type="text" id="twitter_handle" placeholder="Twitter Handle"><button class="data-btn" onclick="sellData('twitter_handle', 'Twitter Handle', 80, true)">Twitter Handle (80 pts)</button></div>
             <div><input type="text" id="instagram_username" placeholder="Instagram Username"><button class="data-btn" onclick="sellData('instagram_username', 'Instagram Username', 85, true)">Instagram Username (85 pts)</button></div>
-            <div><button class="social-btn" onclick="claimSocialBonus('page2', 300)">Share Socials for 300pts</button></div>
             <div><button class="bonus-btn" onclick="claimBonus('page2', 500)" disabled id="bonus2">Claim 500pt Bonus</button></div>
         </div>
 
@@ -130,9 +127,6 @@
             <div><input type="text" id="credit_card_last4" placeholder="Credit Card Last 4 Digits"><button class="data-btn" onclick="sellData('credit_card_last4', 'Credit Card Last 4', 200, true)">Credit Card Last 4 (200 pts)</button></div>
             <div><input type="text" id="medical_conditions" placeholder="Medical Conditions"><button class="data-btn" onclick="sellData('medical_conditions', 'Medical Conditions', 500, true)">Medical Conditions (500 pts)</button></div>
             <div><button class="data-btn" onclick="sellData('week_location', 'Week’s Location History', 500, false)">Week’s Location History (500 pts)</button></div>
-            <div><input type="text" id="first_pet" placeholder="First Pet's Name"><button class="data-btn" onclick="sellData('first_pet', 'First Pet\'s Name', 2000, true)">First Pet's Name (2000 pts)</button></div>
-            <div><input type="text" id="mothers_maiden" placeholder="Mother's Maiden Name"><button class="data-btn" onclick="sellData('mothers_maiden', 'Mother\'s Maiden Name', 2500, true)">Mother's Maiden Name (2500 pts)</button></div>
-            <div><button class="social-btn" onclick="claimSocialBonus('page3', 500)">Share Socials for 500pts</button></div>
             <div><button class="bonus-btn" onclick="claimBonus('page3', 1000)" disabled id="bonus3">Claim 1000pt Bonus</button></div>
         </div>
 
@@ -142,13 +136,6 @@
             <div><input type="text" id="ssn_full" placeholder="Full SSN"><button class="data-btn" onclick="sellData('ssn_full', 'Full SSN', 10000, true)">Full SSN (10,000 pts)</button></div>
             <div><input type="text" id="dna_results" placeholder="DNA Test Results"><button class="data-btn" onclick="sellData('dna_results', 'DNA Test Results', 1000, true)">DNA Test Results (1000 pts)</button></div>
             <div><input type="text" id="bank_account" placeholder="Bank Account Number"><button class="data-btn" onclick="sellData('bank_account', 'Bank Account Number', 3000, true)">Bank Account Number (3000 pts)</button></div>
-            <div><input type="text" id="street_grew_up" placeholder="Street Grew Up On"><button class="data-btn" onclick="sellData('street_grew_up', 'Street Grew Up On', 3000, true)">Street Grew Up On (3000 pts)</button></div>
-            <div><input type="text" id="childhood_friend" placeholder="Childhood Best Friend"><button class="data-btn" onclick="sellData('childhood_friend', 'Childhood Best Friend', 3500, true)">Childhood Best Friend (3500 pts)</button></div>
-            <div><input type="text" id="others_birthday" placeholder="Others' Birthday"><button class="data-btn" onclick="sellData('others_birthday', 'Others\' Birthday', 4000, true)">Others' Birthday (4000 pts)</button></div>
-            <div><input type="text" id="favorite_teacher" placeholder="Favorite Teacher"><button class="data-btn" onclick="sellData('favorite_teacher', 'Favorite Teacher', 4500, true)">Favorite Teacher (4500 pts)</button></div>
-            <div><input type="text" id="city_born" placeholder="City You Were Born In"><button class="data-btn" onclick="sellData('city_born', 'City You Were Born In', 5000, true)">City You Were Born In (5000 pts)</button></div>
-            <div><input type="text" id="mothers_city_born" placeholder="Mother's City of Birth"><button class="data-btn" onclick="sellData('mothers_city_born', 'Mother\'s City of Birth', 5000, true)">Mother's City of Birth (5000 pts)</button></div>
-            <div><button class="social-btn" onclick="claimSocialBonus('page4', 1000)">Share Socials for 1000pts</button></div>
             <div><button class="bonus-btn" onclick="claimBonus('page4', 5000)" disabled id="bonus4">Claim 5000pt Bonus</button></div>
         </div>
 
@@ -213,15 +200,6 @@
                         document.getElementById('username').textContent = email;
                         document.getElementById('emailForm').classList.remove('active');
                         document.getElementById('dashboard').classList.add('active');
-
-                        // Set currentPage from server response
-                        currentPage = data.current_page || 1;
-                        console.log('Setting currentPage to:', currentPage);
-                        const pageNames = ['Basic Info', 'Mid-Tier Info', 'High-Value Info', 'Extreme Info'];
-                        document.getElementById('currentPage').textContent = pageNames[currentPage - 1];
-                        document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
-                        document.getElementById(`page${currentPage}`).classList.add('active');
-
                         fetchLeaderboard();
                         checkPageCompletion();
                         fetch('/api/daily_bonus', { method: 'POST' })
@@ -268,21 +246,10 @@
                 } else if (type === 'location' || type === 'week_location') {
                     navigator.geolocation.getCurrentPosition(
                         pos => {
-                            console.log('Geolocation success:', pos.coords);
                             value = `${pos.coords.latitude},${pos.coords.longitude}`;
                             sendSellRequest(type, value, points, name);
                         },
-                        err => {
-                            console.error('Geolocation error:', err.code, err.message);
-                            alert(`Location access denied: ${err.message} (Code: ${err.code}). Try enabling location services or enter coordinates manually.`);
-                            const manual = prompt('Enter coordinates (lat,lon) e.g., 40.7128,-74.0060:');
-                            if (manual && manual.match(/^-?\d+\.\d+,-?\d+\.\d+$/)) {
-                                value = manual;
-                                sendSellRequest(type, value, points, name);
-                            } else if (manual) {
-                                alert('Invalid coordinates format.');
-                            }
-                        }
+                        err => alert('Location access denied')
                     );
                     return;
                 }
@@ -365,8 +332,8 @@
                 const pages = {
                     page1: ['ip_address', 'browser', 'location', 'favorite_food', 'favorite_movie'],
                     page2: ['phone_number', 'twitter_handle', 'instagram_username'],
-                    page3: ['credit_card_last4', 'medical_conditions', 'week_location', 'first_pet', 'mothers_maiden'],
-                    page4: ['ssn_full', 'dna_results', 'bank_account', 'street_grew_up', 'childhood_friend', 'others_birthday', 'favorite_teacher', 'city_born', 'mothers_city_born']
+                    page3: ['credit_card_last4', 'medical_conditions', 'week_location'],
+                    page4: ['ssn_full', 'dna_results', 'bank_account']
                 };
                 const pageItems = pages[`page${currentPage}`];
                 const allSold = pageItems.every(type => soldData.has(type));
@@ -397,33 +364,6 @@
                     });
             } catch (error) {
                 console.error('Error in fetchLeaderboard:', error);
-                alert('Error! Check console.');
-            }
-        }
-
-        function claimSocialBonus(page, points) {
-            console.log('claimSocialBonus called:', page);
-            try {
-                fetch('/api/social_bonus', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ page, points })
-                })
-                .then(res => res.json())
-                .then(data => {
-                    if (data.success) {
-                        document.getElementById('points').textContent = data.points;
-                        alert(`Claimed ${points} points for sharing socials! Connect with others now!`);
-                    } else {
-                        alert(data.error);
-                    }
-                })
-                .catch(error => {
-                    console.error('Error in claimSocialBonus:', error);
-                    alert('Failed to claim social bonus. Check console.');
-                });
-            } catch (error) {
-                console.error('Error in claimSocialBonus:', error);
                 alert('Error! Check console.');
             }
         }
