@@ -1,0 +1,312 @@
+<script type="text/javascript">
+        var gk_isXlsx = false;
+        var gk_xlsxFileLookup = {};
+        var gk_fileData = {};
+        function filledCell(cell) {
+          return cell !== '' && cell != null;
+        }
+        function loadFileData(filename) {
+        if (gk_isXlsx && gk_xlsxFileLookup[filename]) {
+            try {
+                var workbook = XLSX.read(gk_fileData[filename], { type: 'base64' });
+                var firstSheetName = workbook.SheetNames[0];
+                var worksheet = workbook.Sheets[firstSheetName];
+
+                // Convert sheet to JSON to filter blank rows
+                var jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1, blankrows: false, defval: '' });
+                // Filter out blank rows (rows where all cells are empty, null, or undefined)
+                var filteredData = jsonData.filter(row => row.some(filledCell));
+
+                // Heuristic to find the header row by ignoring rows with fewer filled cells than the next row
+                var headerRowIndex = filteredData.findIndex((row, index) =>
+                  row.filter(filledCell).length >= filteredData[index + 1]?.filter(filledCell).length
+                );
+                // Fallback
+                if (headerRowIndex === -1 || headerRowIndex > 25) {
+                  headerRowIndex = 0;
+                }
+
+                // Convert filtered JSON back to CSV
+                var csv = XLSX.utils.aoa_to_sheet(filteredData.slice(headerRowIndex)); // Create a new sheet from filtered array of arrays
+                csv = XLSX.utils.sheet_to_csv(csv, { header: 1 });
+                return csv;
+            } catch (e) {
+                console.error(e);
+                return "";
+            }
+        }
+        return gk_fileData[filename] || "";
+        }
+        </script><!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gongle - Sell Yourself Silly</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 0; padding: 0; display: flex; justify-content: center; align-items: center; min-height: 100vh; background: #f5f5f5; flex-direction: column; }
+        .landing { text-align: center; }
+        .logo { font-size: 48px; font-weight: bold; margin-bottom: 20px; }
+        .logo span:nth-child(1) { color: #4285f4; } .logo span:nth-child(2) { color: #ea4335; } .logo span:nth-child(3) { color: #fbbc05; }
+        .logo span:nth-child(4) { color: #4285f4; } .logo span:nth-child(5) { color: #34a853; } .logo span:nth-child(6) { color: #ea4335; }
+        .buttons { margin-top: 20px; }
+        .btn { padding: 10px 20px; font-size: 16px; cursor: pointer; background: #4285f4; color: white; border: none; border-radius: 5px; }
+        .btn:hover { background: #3267d6; }
+        .consent, .email-form, .dashboard { display: none; width: 80%; max-width: 800px; padding: 20px; background: white; border-radius: 10px; box-shadow: 0 0 10px rgba(0,0,0,0.1); margin-top: 20px; }
+        .consent.active, .email-form.active, .dashboard.active { display: block; }
+        .data-btn { padding: 5px 10px; margin: 5px; background: #34a853; color: white; border: none; border-radius: 3px; cursor: pointer; }
+        .data-btn:hover { background: #2d8e47; }
+        .data-btn:disabled { background: #ccc; cursor: not-allowed; }
+        .page { display: none; }
+        .page.active { display: block; }
+        .progress { margin-bottom: 20px; }
+        .bonus-btn { background: #fbbc05; }
+        .bonus-btn:hover { background: #e0a800; }
+        input[type="text"], input[type="email"] { padding: 5px; margin: 5px; width: 200px; }
+        .warning { color: #ea4335; font-weight: bold; }
+    </style>
+</head>
+<body>
+    <!-- Landing Page -->
+    <div class="landing" id="landing">
+        <div class="logo">
+            <span>G</span><span>o</span><span>n</span><span>g</span><span>l</span><span>e</span>
+        </div>
+        <div>How much of you will you sell today?</div>
+        <div class="buttons">
+            <button class="btn" onclick="showConsent()">Enter Gongle</button>
+        </div>
+    </div>
+
+    <!-- Consent Popup -->
+    <div class="consent" id="consent">
+        <h2>Terms and Conditions</h2>
+        <p>Welcome to Gongle! By proceeding, you agree to let us harvest your data and sell it to the highest bidder—all for some shiny, worthless points!</p>
+        <label><input type="checkbox" id="consent1"> I agree to sell my soul for points</label><br>
+        <label><input type="checkbox" id="consent2"> I understand this is a joke but my data’s still up for grabs</label><br>
+        <button class="btn" onclick="agree()">I Agree - Harvest My Data</button>
+    </div>
+
+    <!-- Email Input Form -->
+    <div class="email-form" id="emailForm">
+        <h2>Enter your email to join the fun</h2>
+        <p>(Yup, we’re grabbing this too!)</p>
+        <input type="email" id="emailInput" placeholder="your@email.com">
+        <button class="btn" onclick="submitEmail()">Submit</button>
+    </div>
+
+    <!-- Dashboard -->
+    <div class="dashboard" id="dashboard">
+        <h2>Welcome, <span id="username">User</span>!</h2>
+        <p>Your Points: <span id="points">0</span></p>
+        <div class="progress">Current Page: <span id="currentPage">Basic Info</span></div>
+
+        <!-- Basic Info Page -->
+        <div class="page active" id="page1">
+            <h3>Basic Info (Page 1)</h3>
+            <div><button class="data-btn" onclick="sellData('ip_address', 'IP Address', 10, false)">IP Address (10 pts)</button></div>
+            <div><button class="data-btn" onclick="sellData('browser', 'Browser Info', 5, false)">Browser Info (5 pts)</button></div>
+            <div><button class="data-btn" onclick="sellData('location', 'Current Location', 20, false)">Current Location (20 pts)</button></div>
+            <div><input type="text" id="favorite_food" placeholder="Favorite Food"><button class="data-btn" onclick="sellData('favorite_food', 'Favorite Food', 60, true)">Favorite Food (60 pts)</button></div>
+            <div><input type="text" id="favorite_movie" placeholder="Favorite Movie"><button class="data-btn" onclick="sellData('favorite_movie', 'Favorite Movie', 70, true)">Favorite Movie (70 pts)</button></div>
+            <div><button class="bonus-btn" onclick="claimBonus('page1', 200)" disabled id="bonus1">Claim 200pt Bonus</button></div>
+        </div>
+
+        <!-- Mid-Tier Info Page -->
+        <div class="page" id="page2">
+            <h3>Mid-Tier Info (Page 2)</h3>
+            <div><input type="text" id="phone_number" placeholder="Phone Number"><button class="data-btn" onclick="sellData('phone_number', 'Phone Number', 100, true)">Phone Number (100 pts)</button></div>
+            <div><input type="text" id="twitter_handle" placeholder="Twitter Handle"><button class="data-btn" onclick="sellData('twitter_handle', 'Twitter Handle', 80, true)">Twitter Handle (80 pts)</button></div>
+            <div><input type="text" id="instagram_username" placeholder="Instagram Username"><button class="data-btn" onclick="sellData('instagram_username', 'Instagram Username', 85, true)">Instagram Username (85 pts)</button></div>
+            <div><button class="bonus-btn" onclick="claimBonus('page2', 500)" disabled id="bonus2">Claim 500pt Bonus</button></div>
+        </div>
+
+        <!-- High-Value Info Page -->
+        <div class="page" id="page3">
+            <h3>High-Value Info (Page 3)</h3>
+            <div><input type="text" id="credit_card_last4" placeholder="Credit Card Last 4 Digits"><button class="data-btn" onclick="sellData('credit_card_last4', 'Credit Card Last 4', 200, true)">Credit Card Last 4 (200 pts)</button></div>
+            <div><input type="text" id="medical_conditions" placeholder="Medical Conditions"><button class="data-btn" onclick="sellData('medical_conditions', 'Medical Conditions', 500, true)">Medical Conditions (500 pts)</button></div>
+            <div><button class="data-btn" onclick="sellData('week_location', 'Week’s Location History', 500, false)">Week’s Location History (500 pts)</button></div>
+            <div><button class="bonus-btn" onclick="claimBonus('page3', 1000)" disabled id="bonus3">Claim 1000pt Bonus</button></div>
+        </div>
+
+        <!-- Extreme Info Page -->
+        <div class="page" id="page4">
+            <h3>Extreme Info (Page 4)</h3>
+            <div><input type="text" id="ssn_full" placeholder="Full SSN"><button class="data-btn" onclick="sellData('ssn_full', 'Full SSN', 10000, true)">Full SSN (10,000 pts)</button></div>
+            <div><input type="text" id="dna_results" placeholder="DNA Test Results"><button class="data-btn" onclick="sellData('dna_results', 'DNA Test Results', 1000, true)">DNA Test Results (1000 pts)</button></div>
+            <div><input type="text" id="bank_account" placeholder="Bank Account Number"><button class="data-btn" onclick="sellData('bank_account', 'Bank Account Number', 3000, true)">Bank Account Number (3000 pts)</button></div>
+            <div><button class="bonus-btn" onclick="claimBonus('page4', 5000)" disabled id="bonus4">Claim 5000pt Bonus</button></div>
+        </div>
+
+        <h3>Leaderboard</h3>
+        <ul id="leaderboard"></ul>
+    </div>
+
+    <script>
+        let currentPage = 1;
+        let soldData = new Set();
+
+        function showConsent() {
+            try {
+                console.log('showConsent called'); // Debugging
+                const landing = document.getElementById('landing');
+                const consent = document.getElementById('consent');
+                if (!landing || !consent) {
+                    console.error('Element not found:', { landing, consent });
+                    alert('Oops, something broke! Check the console.');
+                    return;
+                }
+                landing.style.display = 'none';
+                consent.classList.add('active');
+            } catch (error) {
+                console.error('Error in showConsent:', error);
+                alert('Something went wrong! Check the console.');
+            }
+        }
+
+        function agree() {
+            if (document.getElementById('consent1').checked && document.getElementById('consent2').checked) {
+                document.getElementById('consent').classList.remove('active');
+                document.getElementById('emailForm').classList.add('active');
+            } else {
+                alert('You must check both boxes to proceed');
+            }
+        }
+
+        function submitEmail() {
+            const email = document.getElementById('emailInput').value;
+            fetch('/api/create_account', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ email })
+            })
+            .then(res => res.json())
+            .then(data => {
+                if (data.success) {
+                    document.getElementById('username').textContent = email;
+                    document.getElementById('emailForm').classList.remove('active');
+                    document.getElementById('dashboard').classList.add('active');
+                    fetchLeaderboard();
+                    checkPageCompletion();
+                    // Trigger daily bonus
+                    fetch('/api/daily_bonus', { method: 'POST' })
+                        .then(res => res.json())
+                        .then(data => {
+                            if (data.success) {
+                                document.getElementById('points').textContent = data.points;
+                                alert(`Daily login bonus: ${data.points_added} points! We grabbed some data too!`);
+                            }
+                        });
+                } else {
+                    alert(data.error);
+                }
+            });
+        }
+
+        function sellData(type, name, points, requiresInput) {
+            if (soldData.has(type)) {
+                alert(`You already sold ${name}! Try something else.`);
+                return;
+            }
+
+            let value = name;
+            if (requiresInput) {
+                const input = document.getElementById(type);
+                value = input.value;
+                if (!value) {
+                    alert(`Please enter your ${name}`);
+                    return;
+                }
+            } else if (type === 'ip_address') {
+                value = 'Auto-collected'; // Server will grab actual IP
+            } else if (type === 'browser') {
+                value = navigator.userAgent;
+            } else if (type === 'location' || type === 'week_location') {
+                navigator.geolocation.getCurrentPosition(
+                    pos => {
+                        value = `${pos.coords.latitude},${pos.coords.longitude}`;
+                        sendSellRequest(type, value, points, name);
+                    },
+                    err => alert('Location access denied')
+                );
+                return;
+            }
+
+            sendSellRequest(type, value, points, name);
+        }
+
+        function sendSellRequest(type, value, points, name) {
+            fetch('/api/sell', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ type, value })
+            })
+            .then(res => res.json())
+            .then(data => {
+                if (data.success) {
+                    soldData.add(type);
+                    document.getElementById('points').textContent = data.points;
+                    document.getElementById(type)?.parentElement.querySelector('.data-btn').disabled = true;
+                    alert(`Sold ${name} for ${points} points! Worthless, but shiny!`);
+                    checkPageCompletion();
+                } else {
+                    alert(data.error);
+                }
+            });
+        }
+
+        function claimBonus(page, points) {
+            fetch('/api/claim_bonus', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ page, points })
+            })
+            .then(res => res.json())
+            .then(data => {
+                if (data.success) {
+                    document.getElementById('points').textContent = data.points;
+                    document.getElementById(`bonus${page.replace('page', '')}`).disabled = true;
+                    if (page !== 'page4') {
+                        currentPage++;
+                        document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+                        document.getElementById(`page${currentPage}`).classList.add('active');
+                        document.getElementById('currentPage').textContent = {
+                            1: 'Basic Info', 2: 'Mid-Tier Info', 3: 'High-Value Info', 4: 'Extreme Info'
+                        }[currentPage];
+                    }
+                    alert(`Claimed ${points} bonus points! Next page unlocked (if any)!`);
+                } else {
+                    alert(data.error);
+                }
+            });
+        }
+
+        function checkPageCompletion() {
+            const pages = {
+                page1: ['ip_address', 'browser', 'location', 'favorite_food', 'favorite_movie'],
+                page2: ['phone_number', 'twitter_handle', 'instagram_username'],
+                page3: ['credit_card_last4', 'medical_conditions', 'week_location'],
+                page4: ['ssn_full', 'dna_results', 'bank_account']
+            };
+            const pageItems = pages[`page${currentPage}`];
+            const allSold = pageItems.every(type => soldData.has(type));
+            document.getElementById(`bonus${currentPage}`).disabled = !allSold;
+        }
+
+        function fetchLeaderboard() {
+            fetch('/api/leaderboard')
+                .then(res => res.json())
+                .then(data => {
+                    const leaderboard = document.getElementById('leaderboard');
+                    leaderboard.innerHTML = '';
+                    data.forEach(user => {
+                        const li = document.createElement('li');
+                        li.textContent = `${user.name}: ${user.points} pts`;
+                        leaderboard.appendChild(li);
+                    });
+                });
+        }
+    </script>
+</body>
+</html>

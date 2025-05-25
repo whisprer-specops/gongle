@@ -1,0 +1,173 @@
+<script type="text/javascript">
+        var gk_isXlsx = false;
+        var gk_xlsxFileLookup = {};
+        var gk_fileData = {};
+        function filledCell(cell) {
+          return cell !== '' && cell != null;
+        }
+        function loadFileData(filename) {
+        if (gk_isXlsx && gk_xlsxFileLookup[filename]) {
+            try {
+                var workbook = XLSX.read(gk_fileData[filename], { type: 'base64' });
+                var firstSheetName = workbook.SheetNames[0];
+                var worksheet = workbook.Sheets[firstSheetName];
+
+                // Convert sheet to JSON to filter blank rows
+                var jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1, blankrows: false, defval: '' });
+                // Filter out blank rows (rows where all cells are empty, null, or undefined)
+                var filteredData = jsonData.filter(row => row.some(filledCell));
+
+                // Heuristic to find the header row by ignoring rows with fewer filled cells than the next row
+                var headerRowIndex = filteredData.findIndex((row, index) =>
+                  row.filter(filledCell).length >= filteredData[index + 1]?.filter(filledCell).length
+                );
+                // Fallback
+                if (headerRowIndex === -1 || headerRowIndex > 25) {
+                  headerRowIndex = 0;
+                }
+
+                // Convert filtered JSON back to CSV
+                var csv = XLSX.utils.aoa_to_sheet(filteredData.slice(headerRowIndex)); // Create a new sheet from filtered array of arrays
+                csv = XLSX.utils.sheet_to_csv(csv, { header: 1 });
+                return csv;
+            } catch (e) {
+                console.error(e);
+                return "";
+            }
+        }
+        return gk_fileData[filename] || "";
+        }
+        </script><!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gongle - Sell Yourself Silly</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 0; padding: 0; display: flex; justify-content: center; align-items: center; min-height: 100vh; background: #f5f5f5; flex-direction: column; }
+        .landing { text-align: center; }
+        .logo { font-size: 48px; font-weight: bold; margin-bottom: 20px; }
+        .logo span:nth-child(1) { color: #4285f4; } .logo span:nth-child(2) { color: #ea4335; } .logo span:nth-child(3) { color: #fbbc05; }
+        .logo span:nth-child(4) { color: #4285f4; } .logo span:nth-child(5) { color: #34a853; } .logo span:nth-child(6) { color: #ea4335; }
+        .buttons { margin-top: 20px; }
+        .btn { padding: 10px 20px; font-size: 16px; cursor: pointer; background: #4285f4; color: white; border: none; border-radius: 5px; }
+        .btn:hover { background: #3267d6; }
+        .consent { display: none; width: 80%; max-width: 800px; padding: 20px; background: white; border-radius: 10px; box-shadow: 0 0 10px rgba(0,0,0,0.1); }
+        .consent.active { display: block; }
+        .dashboard { display: none; width: 80%; max-width: 800px; padding: 20px; background: white; border-radius: 10px; box-shadow: 0 0 10px rgba(0,0,0,0.1); margin-top: 20px; }
+        .dashboard.active { display: block; }
+        .data-btn { padding: 5px 10px; margin: 5px; background: #34a853; color: white; border: none; border-radius: 3px; cursor: pointer; }
+        .data-btn:hover { background: #2d8e47; }
+        .email-form { display: none; width: 80%; max-width: 800px; padding: 20px; background: white; border-radius: 10px; box-shadow: 0 0 10px rgba(0,0,0,0.1); margin-top: 20px; }
+        .email-form.active { display: block; }
+    </style>
+</head>
+<body>
+    <!-- Landing Page -->
+    <div class="landing" id="landing">
+        <div class="logo">
+            <span>G</span><span>o</span><span>n</span><span>g</span><span>l</span><span>e</span>
+        </div>
+        <div>How much of you will you sell today?</div>
+        <div class="buttons">
+            <button class="btn" onclick="showConsent()">Enter Gongle</button>
+        </div>
+    </div>
+
+    <!-- Consent Popup -->
+    <div class="consent" id="consent">
+        <h2>Terms and Conditions</h2>
+        <p>Welcome to Gongle! By proceeding, you agree to let us harvest your data and sell it to the highest bidder—all for some shiny, worthless points!</p>
+        <label><input type="checkbox" id="consent1"> I agree to sell my soul for points</label><br>
+        <label><input type="checkbox" id="consent2"> I understand this is a joke but my data’s still up for grabs</label><br>
+        <button class="btn" onclick="agree()">I Agree - Harvest My Data</button>
+    </div>
+
+    <!-- Email Input Form -->
+    <div class="email-form" id="emailForm">
+        <h2>Enter your email to join the fun</h2>
+        <p>(Yup, we’re grabbing this too!)</p>
+        <input type="email" id="emailInput" placeholder="your@email.com">
+        <button class="btn" onclick="submitEmail()">Submit</button>
+    </div>
+
+    <!-- Dashboard -->
+    <div class="dashboard" id="dashboard">
+        <h2>Welcome, <span id="username">User</span>!</h2>
+        <p>Your Points: <span id="points">0</span></p>
+        <h3>Sell Your Data</h3>
+        <button class="data-btn" onclick="sellData('ip_address', 'Your IP Address', 10)">IP Address (10 pts)</button>
+        <button class="data-btn" onclick="sellData('browser', 'Your Browser', 5)">Browser (5 pts)</button>
+        <button class="data-btn" onclick="sellData('location', 'Your Location', 20)">Location (20 pts)</button>
+        <h3>Leaderboard</h3>
+        <ul id="leaderboard"></ul>
+    </div>
+
+    <script>
+        function showConsent() {
+            document.getElementById('landing').style.display = 'none';
+            document.getElementById('consent').classList.add('active');
+        }
+
+        function agree() {
+            if (document.getElementById('consent1').checked && document.getElementById('consent2').checked) {
+                document.getElementById('consent').classList.remove('active');
+                document.getElementById('emailForm').classList.add('active');
+            } else {
+                alert('You must check both boxes to proceed');
+            }
+        }
+
+        function submitEmail() {
+            const email = document.getElementById('emailInput').value;
+            fetch('/api/create_account', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ email })
+            })
+            .then(res => res.json())
+            .then(data => {
+                if (data.success) {
+                    document.getElementById('username').textContent = email;
+                    document.getElementById('emailForm').classList.remove('active');
+                    document.getElementById('dashboard').classList.add('active');
+                    fetchLeaderboard();
+                } else {
+                    alert(data.error);
+                }
+            });
+        }
+
+        function sellData(type, name, points) {
+            fetch('/api/sell', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ type, value: name })
+            })
+            .then(res => res.json())
+            .then(data => {
+                if (data.success) {
+                    document.getElementById('points').textContent = data.points;
+                    alert(`Sold ${name} for ${points} points! Worthless, but shiny!`);
+                } else {
+                    alert(data.error);
+                }
+            });
+        }
+
+        function fetchLeaderboard() {
+            fetch('/api/leaderboard')
+                .then(res => res.json())
+                .then(data => {
+                    const leaderboard = document.getElementById('leaderboard');
+                    leaderboard.innerHTML = '';
+                    data.forEach(user => {
+                        const li = document.createElement('li');
+                        li.textContent = `${user.name}: ${user.points} pts`;
+                        leaderboard.appendChild(li);
+                    });
+                });
+        }
+    </script>
+</body>
+</html>
