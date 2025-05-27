@@ -1,0 +1,38 @@
+# Prometheus configuration for Gongle monitoring
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+  external_labels:
+    monitor: 'gongle-monitor'
+
+scrape_configs:
+  # Monitor Prometheus itself
+  - job_name: 'prometheus'
+    static_configs:
+      - targets: ['localhost:9090']
+
+  # Monitor the Flask app metrics
+  - job_name: 'gongle-app'
+    static_configs:
+      - targets: ['gongle:5000']
+    metrics_path: '/metrics'
+
+  # Monitor Redis
+  - job_name: 'redis'
+    static_configs:
+      - targets: ['redis:6379']
+
+  # Monitor PostgreSQL (if using postgres_exporter)
+  # - job_name: 'postgres'
+  #   static_configs:
+  #     - targets: ['postgres:9187']
+
+# Alerting rules (optional)
+# rule_files:
+#   - '/etc/prometheus/alerts.yml'
+
+# Alertmanager configuration (optional)
+# alerting:
+#   alertmanagers:
+#     - static_configs:
+#         - targets: ['alertmanager:9093']

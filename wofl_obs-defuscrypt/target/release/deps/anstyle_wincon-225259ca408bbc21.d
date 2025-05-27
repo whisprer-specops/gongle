@@ -1,0 +1,10 @@
+D:\code\repos\GitHub_Desktop\gongle-secure\wofl_obs-defuscrypt\target\release\deps\libanstyle_wincon-225259ca408bbc21.rmeta: C:\Users\phine\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\anstyle-wincon-3.0.8\src\lib.rs C:\Users\phine\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\anstyle-wincon-3.0.8\src\ansi.rs C:\Users\phine\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\anstyle-wincon-3.0.8\src\stream.rs C:\Users\phine\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\anstyle-wincon-3.0.8\src\windows.rs
+
+D:\code\repos\GitHub_Desktop\gongle-secure\wofl_obs-defuscrypt\target\release\deps\libanstyle_wincon-225259ca408bbc21.rlib: C:\Users\phine\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\anstyle-wincon-3.0.8\src\lib.rs C:\Users\phine\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\anstyle-wincon-3.0.8\src\ansi.rs C:\Users\phine\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\anstyle-wincon-3.0.8\src\stream.rs C:\Users\phine\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\anstyle-wincon-3.0.8\src\windows.rs
+
+D:\code\repos\GitHub_Desktop\gongle-secure\wofl_obs-defuscrypt\target\release\deps\anstyle_wincon-225259ca408bbc21.d: C:\Users\phine\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\anstyle-wincon-3.0.8\src\lib.rs C:\Users\phine\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\anstyle-wincon-3.0.8\src\ansi.rs C:\Users\phine\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\anstyle-wincon-3.0.8\src\stream.rs C:\Users\phine\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\anstyle-wincon-3.0.8\src\windows.rs
+
+C:\Users\phine\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\anstyle-wincon-3.0.8\src\lib.rs:
+C:\Users\phine\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\anstyle-wincon-3.0.8\src\ansi.rs:
+C:\Users\phine\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\anstyle-wincon-3.0.8\src\stream.rs:
+C:\Users\phine\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\anstyle-wincon-3.0.8\src\windows.rs:

@@ -1,0 +1,11 @@
+D:\code\repos\GitHub_Desktop\gongle-secure\wofl_obs-defuscrypt\target\release\deps\liblibc-c8560e7335689fd4.rmeta: C:\Users\phine\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\libc-0.2.172\src\lib.rs C:\Users\phine\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\libc-0.2.172\src\macros.rs C:\Users\phine\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\libc-0.2.172\src\primitives.rs C:\Users\phine\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\libc-0.2.172\src\windows\mod.rs C:\Users\phine\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\libc-0.2.172\src\windows\gnu\mod.rs
+
+D:\code\repos\GitHub_Desktop\gongle-secure\wofl_obs-defuscrypt\target\release\deps\liblibc-c8560e7335689fd4.rlib: C:\Users\phine\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\libc-0.2.172\src\lib.rs C:\Users\phine\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\libc-0.2.172\src\macros.rs C:\Users\phine\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\libc-0.2.172\src\primitives.rs C:\Users\phine\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\libc-0.2.172\src\windows\mod.rs C:\Users\phine\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\libc-0.2.172\src\windows\gnu\mod.rs
+
+D:\code\repos\GitHub_Desktop\gongle-secure\wofl_obs-defuscrypt\target\release\deps\libc-c8560e7335689fd4.d: C:\Users\phine\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\libc-0.2.172\src\lib.rs C:\Users\phine\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\libc-0.2.172\src\macros.rs C:\Users\phine\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\libc-0.2.172\src\primitives.rs C:\Users\phine\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\libc-0.2.172\src\windows\mod.rs C:\Users\phine\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\libc-0.2.172\src\windows\gnu\mod.rs
+
+C:\Users\phine\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\libc-0.2.172\src\lib.rs:
+C:\Users\phine\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\libc-0.2.172\src\macros.rs:
+C:\Users\phine\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\libc-0.2.172\src\primitives.rs:
+C:\Users\phine\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\libc-0.2.172\src\windows\mod.rs:
+C:\Users\phine\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\libc-0.2.172\src\windows\gnu\mod.rs:
