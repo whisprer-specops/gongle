@@ -1,909 +1,636 @@
-<script type="text/javascript">
-        var gk_isXlsx = false;
-        var gk_xlsxFileLookup = {};
-        var gk_fileData = {};
-        function filledCell(cell) {
-          return cell !== '' && cell != null;
-        }
-        function loadFileData(filename) {
-        if (gk_isXlsx && gk_xlsxFileLookup[filename]) {
-            try {
-                var workbook = XLSX.read(gk_fileData[filename], { type: 'base64' });
-                var firstSheetName = workbook.SheetNames[0];
-                var worksheet = workbook.Sheets[firstSheetName];
-
-                // Convert sheet to JSON to filter blank rows
-                var jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1, blankrows: false, defval: '' });
-                // Filter out blank rows (rows where all cells are empty, null, or undefined)
-                var filteredData = jsonData.filter(row => row.some(filledCell));
-
-                // Heuristic to find the header row by ignoring rows with fewer filled cells than the next row
-                var headerRowIndex = filteredData.findIndex((row, index) =>
-                  row.filter(filledCell).length >= filteredData[index + 1]?.filter(filledCell).length
-                );
-                // Fallback
-                if (headerRowIndex === -1 || headerRowIndex > 25) {
-                  headerRowIndex = 0;
-                }
-
-                // Convert filtered JSON back to CSV
-                var csv = XLSX.utils.aoa_to_sheet(filteredData.slice(headerRowIndex)); // Create a new sheet from filtered array of arrays
-                csv = XLSX.utils.sheet_to_csv(csv, { header: 1 });
-                return csv;
-            } catch (e) {
-                console.error(e);
-                return "";
-            }
-        }
-        return gk_fileData[filename] || "";
-        }
-        </script><!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Gongle - Where your data goes to party before being sold!"</title>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
-        body {
-            font-family: Arial, sans-serif;
-            background: #fff;
-            color: #333;
-            min-height: 100vh;
-            position: relative;
-        }
-
-        /* Homepage Styles */
-        .homepage {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            min-height: 100vh;
-            padding: 20px;
-        }
-
-        .logo {
-            font-size: 90px;
-            font-weight: normal;
-            margin-bottom: 30px;
-            font-family: 'Arial', sans-serif;
-            cursor: pointer;
-            transition: transform 0.3s;
-        }
-
-        .logo:hover {
-            transform: scale(1.05);
-        }
-
-        .logo span:nth-child(1) { color: #4285f4; }
-        .logo span:nth-child(2) { color: #ea4335; }
-        .logo span:nth-child(3) { color: #fbbc05; }
-        .logo span:nth-child(4) { color: #4285f4; }
-        .logo span:nth-child(5) { color: #34a853; }
-        .logo span:nth-child(6) { color: #ea4335; }
-
-        .search-box {
-            width: 100%;
-            max-width: 600px;
-            border: 1px solid #dfe1e5;
-            border-radius: 24px;
-            padding: 10px 20px;
-            font-size: 16px;
-            outline: none;
-            transition: box-shadow 0.3s;
-        }
-
-        .search-box:focus {
-            box-shadow: 0 1px 6px rgba(32,33,36,.28);
-        }
-
-        .consent, .email-form, .dashboard { display: none; width: 80%; max-width: 800px; padding: 20px; background: white; border-radius: 10px; box-shadow: 0 0 10px rgba(0,0,0,0.1); margin-top: 20px; }
-        .consent.active, .email-form.active, .dashboard.active { display: block; }
-        .data-btn { padding: 5px 10px; margin: 5px; background: #34a853; color: white; border: none; border-radius: 3px; cursor: pointer; }
-        .data-btn:hover { background: #2d8e47; }
-        .data-btn:disabled { background: #ccc; cursor: not-allowed; }
-        .page { display: none; }
-        .page.active { display: block; }
-        .progress { margin-bottom: 20px; }
-        .bonus-btn { background: #fbbc05; }
-        .bonus-btn:hover { background: #e0a800; }
-        .social-btn { background: #9b59b6; color: white; }
-        .social-btn:hover { background: #8e44ad; }
-        input[type="text"], input[type="email"] { padding: 5px; margin: 5px; width: 200px; }
-        .warning { color: #ea4335; font-weight: bold; }
-        .leaderboard li { display: flex; align-items: center; }
-        .leaderboard i { margin-left: 5px; font-size: 16px; }
-        .fa-x-twitter { color: #000; }
-        .fa-instagram { color: #E1306C; }
-        .fa-facebook { color: #4267B2; }
-        .fa-youtube { color: #FF0000; }
-        .fa-facebook-messenger { color: #0084FF; }
-        .fa-whatsapp { color: #25D366; }
-        .fa-telegram { color: #0088cc; }
-        .fa-tiktok { color: #000; }
-        .fa-discord { color: #5865F2; }
-        .fa-reddit { color: #FF4500; }
-        .fa-linkedin { color: #0077B5; }
-        .fa-snapchat { color: #FFFC00; }
-        .popup { display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: white; padding: 20px; border-radius: 10px; box-shadow: 0 0 10px rgba(0,0,0,0.1); z-index: 1000; }
-        .popup.active { display: block; }
-    </style>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1.0" />
+  <title>Gongle - Where your data goes to party before being sold!</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" />
+  <style>
+    *{margin:0;padding:0;box-sizing:border-box}
+    body{font-family:Arial,Helvetica,sans-serif;background:linear-gradient(135deg,#667eea 0%,#764ba2 100%);color:#333;min-height:100vh;position:relative}
+    .homepage{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:100vh;padding:20px;text-align:center}
+    .logo{font-size:90px;margin-bottom:20px;cursor:pointer;transition:transform .3s;text-shadow:2px 2px 4px rgba(0,0,0,.3)}
+    .logo:hover{transform:scale(1.05)}
+    .logo span:nth-child(1){color:#4285f4}.logo span:nth-child(2){color:#ea4335}.logo span:nth-child(3){color:#fbbc05}
+    .logo span:nth-child(4){color:#4285f4}.logo span:nth-child(5){color:#34a853}.logo span:nth-child(6){color:#ea4335}
+    .tagline{font-size:18px;color:#fff;margin-bottom:30px;text-shadow:1px 1px 2px rgba(0,0,0,.5)}
+    .search-container{width:100%;max-width:600px;margin-bottom:30px}
+    .search-box{width:100%;border:2px solid #dfe1e5;border-radius:24px;padding:15px 20px;font-size:16px;outline:none;transition:box-shadow .3s;background:rgba(255,255,255,.9)}
+    .search-box:focus{box-shadow:0 1px 6px rgba(32,33,36,.28);border-color:#4285f4}
+    .btn{background:linear-gradient(45deg,#4285f4,#34a853);color:#fff;border:none;padding:15px 30px;font-size:16px;border-radius:25px;cursor:pointer;margin:10px;font-weight:bold;text-transform:uppercase;box-shadow:0 4px 15px rgba(0,0,0,.2);transition:all .3s}
+    .btn:hover{transform:translateY(-2px);box-shadow:0 6px 20px rgba(0,0,0,.3)}
+    .modal{display:none;position:fixed;z-index:1000;left:0;top:0;width:100%;height:100%;background:rgba(0,0,0,.5)}
+    .modal.active{display:flex;align-items:center;justify-content:center}
+    .modal-content{background:#fff;padding:30px;border-radius:15px;max-width:600px;width:90%;max-height:80vh;overflow-y:auto;box-shadow:0 20px 40px rgba(0,0,0,.2)}
+    .email-input{width:100%;padding:12px;border-radius:8px;border:1px solid #ccc;margin-bottom:12px}
+    .status-message{margin-top:10px;padding:10px;border-radius:8px;display:none}
+    .status-success{background:#d4edda;color:#155724;border:1px solid #c3e6cb}
+    .status-error{background:#f8d7da;color:#721c24;border:1px solid #f5c6cb}
+    .page-progress{background:#e9ecef;height:6px;border-radius:3px;margin:20px 0;overflow:hidden}
+    .progress-bar{background:linear-gradient(45deg,#4285f4,#34a853);height:100%;border-radius:3px;transition:width .5s}
+    .connection-status{position:fixed;top:20px;right:20px;padding:10px 15px;border-radius:20px;font-size:14px;font-weight:bold;z-index:2000}
+    .connection-online{background:#d4edda;color:#155724}
+    .connection-offline{background:#f8d7da;color:#721c24}
+    @keyframes pulse{0%{transform:scale(1)}50%{transform:scale(1.05)}100%{transform:scale(1)}}
+    .dashboard{display:none;max-width:1000px;margin:0 auto;padding:30px}
+    .dashboard.active{display:block}
+    .dashboard-header{background:#fff;padding:20px;border-radius:12px;box-shadow:0 10px 25px rgba(0,0,0,.12)}
+    .page{display:none;background:#fff;margin:20px 0;padding:20px;border-radius:12px;box-shadow:0 10px 25px rgba(0,0,0,.12)}
+    .page.active{display:block}
+    .data-input{width:70%;padding:10px;border-radius:8px;border:1px solid #ccc;margin:8px 8px 8px 0}
+    .data-btn{padding:10px 16px;border:none;border-radius:8px;background:#4285f4;color:#fff;cursor:pointer}
+    .bonus-btn{margin-top:12px;background:#ffc107;color:#333}
+    .leaderboard{background:#fff;padding:20px;border-radius:12px;box-shadow:0 10px 25px rgba(0,0,0,.12)}
+    .leaderboard ul{list-style:none}
+    .leaderboard li{display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px dashed #eee}
+    .leaderboard li:last-child{border-bottom:none}
+  </style>
 </head>
 <body>
-    <!-- Landing Page -->
-    <div class="homepage" id="landing">
-        <div class="logo" onclick="showConsent()">
-            <span>G</span><span>o</span><span>n</span><span>g</span><span>l</span><span>e</span>
-        </div>
-        <div>How much of you will you sell today?</div>
-        <div class="search-box" id="searchBox" placeholder="Search Gongle..."></div>
-        <div class="buttons" style="margin-top: 20px;">
-            <button class="btn" id="enterGongleBtn" onclick="showConsent()">Enter Gongle</button>
-        </div>
+  <div id="connectionStatus" class="connection-status connection-offline">Flask Server Not Connected</div>
+
+  <!-- landing -->
+  <div class="homepage" id="landing">
+    <div class="logo" onclick="showConsent()"><span>G</span><span>o</span><span>n</span><span>g</span><span>l</span><span>e</span></div>
+    <div class="tagline">Where your data goes to party before being sold!</div>
+    <div class="search-container">
+      <input class="search-box" placeholder="How much of you will you sell today?" onclick="showConsent()" readonly />
+    </div>
+    <button class="btn" onclick="showConsent()">Enter Gongle</button>
+    <p style="color:#fff;margin-top:20px;font-style:italic">"The only search engine that's honest about harvesting your data!"</p>
+  </div>
+
+  <!-- consent modal -->
+  <div class="modal" id="consentModal">
+    <div class="modal-content">
+      <h2>GONGLE DATA HARVESTING AGREEMENT</h2>
+      <p><strong>Last Updated: Right Now</strong></p>
+      <h4>WHAT WE DO</h4>
+      <p>Gongle is a satirical data collection platform that explicitly monetizes user-provided personal information.</p>
+      <h4>YOUR DATA RIGHTS</h4>
+      <ul>
+        <li>Your data may be collected and “sold” for the game</li>
+        <li>You get points in return</li>
+        <li>This is for entertainment/education</li>
+      </ul>
+      <h4>THE THEATER</h4>
+      <p>Security theater features are for satire.</p>
+      <div class="checkbox-container" style="display:grid;gap:8px;margin:14px 0">
+        <label><input type="checkbox" id="consent1" /> I understand this is satire</label>
+        <label><input type="checkbox" id="consent2" /> I agree to play</label>
+        <label><input type="checkbox" id="consent3" /> I acknowledge the irony</label>
+      </div>
+      <div style="text-align:center">
+        <button class="btn" onclick="agreeToTerms()">I Agree - Let's Play</button>
+        <button class="btn" onclick="closeModal()" style="background:#666;margin-left:10px">Back</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- email modal -->
+  <div class="modal" id="emailModal">
+    <div class="modal-content">
+      <h2>Join the Data Circus</h2>
+      <p style="margin-bottom:12px">Enter your email to start</p>
+      <input type="email" id="emailInput" class="email-input" placeholder="your@email.com" required />
+      <div id="emailStatus" class="status-message"></div>
+      <div style="text-align:center;margin-top:10px">
+        <button class="btn" onclick="submitEmail()">Create Account</button>
+        <button class="btn" onclick="closeModal()" style="background:#666;margin-left:10px">Back</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- dashboard -->
+  <div class="dashboard" id="dashboard">
+    <div class="dashboard-header">
+      <h2>Welcome to the Data Marketplace, <span id="username">User</span>!</h2>
+      <div class="points-display"><span id="points">0</span> Points</div>
+      <p style="margin-top:10px">Current Stage: <span id="currentStage">Basic Info</span></p>
+      <div class="page-progress"><div class="progress-bar" id="progressBar" style="width:20%"></div></div>
     </div>
 
-    <!-- Consent Popup -->
-    <div class="consent" id="consent">
-        <h2>Terms and Conditions</h2>
-            <h3>GONGLE DATA HARVESTING AGREEMENT</h3>
-            <p><strong>Last Updated: May 25, 2025</strong></p>
-            
-            <h4>1. ACCEPTANCE OF TERMS</h4>
-            <p>By clicking "I Agree" below, you acknowledge that you have read, understood, and agree to be bound by these Terms and Conditions. You understand that this is a legally binding contract.</p>
-            
-            <h4>2. NATURE OF SERVICE</h4>
-            <p>Gongle is a data collection platform that explicitly monetizes user-provided personal information. By using this service, you acknowledge and consent to:</p>
-            <ul>
-                <li>The collection, storage, and sale of any data you provide</li>
-                <li>The permanent retention of this data</li>
-                <li>The unlimited commercial use of your data</li>
-                <li>The sharing of your data with third parties, including but not limited to: advertisers, data brokers, marketing firms, government agencies, and any other interested parties</li>
-            </ul>
-            
-            <h4>3. DATA RIGHTS</h4>
-            <p>By providing data to Gongle, you irrevocably transfer all rights to this information. You acknowledge that:</p>
-            <ul>
-                <li>You have no right to request deletion of data once submitted</li>
-                <li>You cannot revoke consent after data submission</li>
-                <li>Your data may be combined with other sources to create detailed profiles</li>
-                <li>Your data may be used for purposes including but not limited to: targeted advertising, credit decisions, employment screening, insurance underwriting, and law enforcement</li>
-            </ul>
-            
-            <h4>4. POINTS SYSTEM</h4>
-            <p>The points awarded for data submission have no monetary value and cannot be exchanged for any goods, services, or currency. Points are purely for gamification purposes.</p>
-            
-            <h4>5. LIABILITY</h4>
-            <p>Gongle assumes no liability for any consequences arising from the use of your data by third parties, including but not limited to: identity theft, financial loss, reputational damage, or emotional distress.</p>
-            
-            <h4>6. ACCURACY OF DATA</h4>
-            <p>You certify that all data provided is accurate and that you have the legal right to share this information. Providing false information may result in account termination but will not result in data deletion.</p>
-            
-            <h4>7. MODIFICATION OF TERMS</h4>
-            <p>Gongle reserves the right to modify these terms at any time without notice. Continued use of the service constitutes acceptance of modified terms.</p>
-            
-            <h4>8. GOVERNING LAW</h4>
-            <p>These terms are governed by the laws of the Cayman Islands. Any disputes will be resolved through binding arbitration.</p>
-            
-            <h4>9. ENTIRE AGREEMENT</h4>
-            <p>This constitutes the entire agreement between you and Gongle. No verbal agreements or promises are binding.</p>
-        <p>Welcome to Gongle! By proceeding, you agree to let us harvest your data and sell it to the highest bidder—all for some shiny, worthless points!</p>
-        <label><input type="checkbox" id="consent1"> I agree to sell my soul for points</label><br>
-        <label><input type="checkbox" id="consent2"> I understand this is a joke but my data’s still up for grabs</label><br>
-        <button class="btn" onclick="agree()">I Agree - Harvest My Data</button>
+    <!-- page 1 -->
+    <div class="page active" id="page1">
+      <h3>Basic Info Buffet</h3>
+      <p style="margin-bottom:20px;color:#666">Let's start with the appetizers.</p>
+      <div><input class="data-input" id="ip_address" placeholder="Your IP (auto-collected)" disabled /><button class="data-btn" data-type="ip_address" onclick="sellData('ip_address','IP Address',10,false)">Sell IP (10 pts)</button></div>
+      <div><input class="data-input" id="browser" placeholder="Browser (auto)" disabled /><button class="data-btn" data-type="browser" onclick="sellData('browser','Browser',5,false)">Sell Browser (5 pts)</button></div>
+      <div><input class="data-input" id="location" placeholder="City, Country" /><button class="data-btn" data-type="location" onclick="sellData('location','Location',20,true)">Sell Location (20 pts)</button></div>
+      <div><input class="data-input" id="favorite_food" placeholder="Favorite Food" /><button class="data-btn" data-type="favorite_food" onclick="sellData('favorite_food','Favorite Food',60,true)">Favorite Food (60 pts)</button></div>
+      <div><input class="data-input" id="favorite_movie" placeholder="Favorite Movie" /><button class="data-btn" data-type="favorite_movie" onclick="sellData('favorite_movie','Favorite Movie',70,true)">Favorite Movie (70 pts)</button></div>
+      <button class="bonus-btn btn" id="bonus1" data-bonus-page="page1" data-bonus-points="300" disabled>Claim 300pt Completion Bonus</button>
     </div>
 
-    <!-- Email Input Form -->
-    <div class="email-form" id="emailForm">
-        <h2>Enter your email to join the fun</h2>
-        <p>(Yup, we’re grabbing this too!)</p>
-        <input type="email" id="emailInput" placeholder="your@email.com">
-        <button class="btn" onclick="submitEmail()">Submit</button>
+    <!-- page 2 -->
+    <div class="page" id="page2">
+      <h3>Mid-Tier Info (Page 2)</h3>
+      <p>Getting warmer…</p>
+      <div><input class="data-input" id="phone_number" placeholder="Phone Number" /><button class="data-btn" data-type="phone_number" onclick="sellData('phone_number','Phone Number',100,true)">Phone Number (100 pts)</button></div>
+      <div><input class="data-input" id="twitter_handle" placeholder="Twitter/X Handle" /><button class="data-btn" data-type="twitter_handle" onclick="sellData('twitter_handle','Twitter Handle',80,true)">Twitter Handle (80 pts)</button></div>
+      <div><input class="data-input" id="instagram_username" placeholder="Instagram Username" /><button class="data-btn" data-type="instagram_username" onclick="sellData('instagram_username','Instagram Username',85,true)">Instagram Username (85 pts)</button></div>
+      <div><input class="data-input" id="facebook_name" placeholder="Facebook Name" /><button class="data-btn" data-type="facebook_name" onclick="sellData('facebook_name','Facebook Name',1000,true)">Facebook Name (1000 pts)</button></div>
+      <div><input class="data-input" id="occupation" placeholder="Your Job/Occupation" /><button class="data-btn" data-type="occupation" onclick="sellData('occupation','Occupation',100,true)">Occupation (100 pts)</button></div>
+      <button class="bonus-btn btn" id="bonus2" data-bonus-page="page2" data-bonus-points="500" disabled>Claim 500pt Completion Bonus</button>
     </div>
 
-    <!-- Dashboard -->
-    <div class="dashboard" id="dashboard">
-        <h2>Welcome, <span id="username">User</span>!</h2>
-        <p>Your Points: <span id="points">0</span></p>
-        <div class="progress">Current Page: <span id="currentPage">Basic Info</span></div>
-
-        <!-- Basic Info Page -->
-        <div class="page active" id="page1">
-            <h3>Basic Info (Page 1)</h3>
-            <div><button class="data-btn" data-type="ip_address" onclick="sellData('ip_address', 'IP Address', 10, false)">IP Address (10 pts)</button></div>
-            <div><button class="data-btn" data-type="browser" onclick="sellData('browser', 'Browser Info', 5, false)">Browser Info (5 pts)</button></div>
-            <div><button class="data-btn" data-type="location" onclick="sellData('location', 'Current Location', 20, false)">Current Location (20 pts)</button></div>
-            <div><input type="text" id="favorite_food" placeholder="Favorite Food"><button class="data-btn" data-type="favorite_food" onclick="sellData('favorite_food', 'Favorite Food', 60, true)">Favorite Food (60 pts)</button></div>
-            <div><input type="text" id="favorite_movie" placeholder="Favorite Movie"><button class="data-btn" data-type="favorite_movie" onclick="sellData('favorite_movie', 'Favorite Movie', 70, true)">Favorite Movie (70 pts)</button></div>
-            <div><button class="bonus-btn" onclick="claimBonus('page1', 200)" disabled id="bonus1">Claim 200pt Bonus</button></div>
-        </div>
-
-        <!-- Mid-Tier Info Page -->
-        <div class="page" id="page2">
-            <h3>Mid-Tier Info (Page 2)</h3>
-            <div><input type="text" id="phone_number" placeholder="Phone Number"><button class="data-btn" data-type="phone_number" onclick="sellData('phone_number', 'Phone Number', 100, true)">Phone Number (100 pts)</button></div>
-            <div><input type="text" id="twitter_handle" placeholder="Twitter Handle"><button class="data-btn" data-type="twitter_handle" onclick="sellData('twitter_handle', 'Twitter Handle', 80, true)">Twitter Handle (80 pts)</button></div>
-            <div><input type="text" id="instagram_username" placeholder="Instagram Username"><button class="data-btn" data-type="instagram_username" onclick="sellData('instagram_username', 'Instagram Username', 85, true)">Instagram Username (85 pts)</button></div>
-            <div><button class="social-btn" onclick="claimSocialBonus('page2', 300)">Share Socials for 300pts</button></div>
-            <div><button class="bonus-btn" onclick="claimBonus('page2', 500)" disabled id="bonus2">Claim 500pt Bonus</button></div>
-        </div>
-
-        <!-- High-Value Info Page -->
+        <!-- page 3 -->
         <div class="page" id="page3">
-            <h3>High-Value Info (Page 3)</h3>
-            <div><input type="text" id="credit_card_last4" placeholder="Credit Card Last 4 Digits"><button class="data-btn" data-type="credit_card_last4" onclick="sellData('credit_card_last4', 'Credit Card Last 4', 200, true)">Credit Card Last 4 (200 pts)</button></div>
-            <div><input type="text" id="medical_conditions" placeholder="Medical Conditions"><button class="data-btn" data-type="medical_conditions" onclick="sellData('medical_conditions', 'Medical Conditions', 500, true)">Medical Conditions (500 pts)</button></div>
-            <div><button class="data-btn" data-type="week_location" onclick="sellData('week_location', 'Week’s Location History', 500, false)">Week’s Location History (500 pts)</button></div>
-            <div><input type="text" id="first_pet" placeholder="First Pet's Name"><button class="data-btn" data-type="first_pet" onclick="sellData('first_pet', 'First Pet\'s Name', 2000, true)">First Pet's Name (2000 pts)</button></div>
-            <div><input type="text" id="mothers_maiden" placeholder="Mother's Maiden Name"><button class="data-btn" data-type="mothers_maiden" onclick="sellData('mothers_maiden', 'Mother\'s Maiden Name', 2500, true)">Mother's Maiden Name (2500 pts)</button></div>
-            <div><button class="social-btn" onclick="claimSocialBonus('page3', 500)">Share Socials for 500pts</button></div>
-            <div><button class="bonus-btn" onclick="claimBonus('page3', 1000)" disabled id="bonus3">Claim 1000pt Bonus</button></div>
-        </div>
-
-        <!-- Extreme Info Page -->
-        <div class="page" id="page4">
-            <h3>Extreme Info (Page 4)</h3>
-            <div><input type="text" id="ssn_full" placeholder="Full SSN"><button class="data-btn" data-type="ssn_full" onclick="sellData('ssn_full', 'Full SSN', 10000, true)">Full SSN (10,000 pts)</button></div>
-            <div><input type="text" id="dna_results" placeholder="DNA Test Results"><button class="data-btn" data-type="dna_results" onclick="sellData('dna_results', 'DNA Test Results', 1000, true)">DNA Test Results (1000 pts)</button></div>
-            <div><input type="text" id="bank_account" placeholder="Bank Account Number"><button class="data-btn" data-type="bank_account" onclick="sellData('bank_account', 'Bank Account Number', 3000, true)">Bank Account Number (3000 pts)</button></div>
-            <div><input type="text" id="street_grew_up" placeholder="Street Grew Up On"><button class="data-btn" data-type="street_grew_up" onclick="sellData('street_grew_up', 'Street Grew Up On', 3000, true)">Street Grew Up On (3000 pts)</button></div>
-            <div><input type="text" id="childhood_friend" placeholder="Childhood Best Friend"><button class="data-btn" data-type="childhood_friend" onclick="sellData('childhood_friend', 'Childhood Best Friend', 3500, true)">Childhood Best Friend (3500 pts)</button></div>
-            <div><input type="text" id="mothers_birthday" placeholder="Mother's Birthday"><button class="data-btn" data-type="mothers_birthday" onclick="sellData('mothers_birthday', 'Mother\'s Birthday', 4000, true)">Mother's Birthday (4000 pts)</button></div>
-            <div><input type="text" id="favorite_teacher" placeholder="Favorite Teacher"><button class="data-btn" data-type="favorite_teacher" onclick="sellData('favorite_teacher', 'Favorite Teacher', 4500, true)">Favorite Teacher (4500 pts)</button></div>
-            <div><input type="text" id="city_born" placeholder="City You Were Born In"><button class="data-btn" data-type="city_born" onclick="sellData('city_born', 'City You Were Born In', 5000, true)">City You Were Born In (5000 pts)</button></div>
-            <div><input type="text" id="mothers_city_born" placeholder="Mother's City of Birth"><button class="data-btn" data-type="mothers_city_born" onclick="sellData('mothers_city_born', 'Mother\'s City of Birth', 5000, true)">Mother's City of Birth (5000 pts)</button></div>
-            <div><input type="text" id="gender" placeholder="Gender"><button class="data-btn" data-type="gender" onclick="sellData('gender', 'Gender', 50, true)">Gender (50 pts)</button></div>
-            <div><input type="text" id="marital_status" placeholder="Marital Status"><button class="data-btn" data-type="marital_status" onclick="sellData('marital_status', 'Marital Status', 75, true)">Marital Status (75 pts)</button></div>
-            <div><input type="text" id="occupation" placeholder="Occupation"><button class="data-btn" data-type="occupation" onclick="sellData('occupation', 'Occupation', 100, true)">Occupation (100 pts)</button></div>
-            <div><input type="text" id="education_level" placeholder="Education Level"><button class="data-btn" data-type="education_level" onclick="sellData('education_level', 'Education Level', 75, true)">Education Level (75 pts)</button></div>
-            <div><input type="text" id="nationality" placeholder="Nationality"><button class="data-btn" data-type="nationality" onclick="sellData('nationality', 'Nationality', 50, true)">Nationality (50 pts)</button></div>
-            <div><input type="text" id="passport_number" placeholder="Passport Number"><button class="data-btn" data-type="passport_number" onclick="sellData('passport_number', 'Passport Number', 500, true)">Passport Number (500 pts)</button></div>
-            <div><input type="text" id="driver_license_number" placeholder="Driver's License Number"><button class="data-btn" data-type="driver_license_number" onclick="sellData('driver_license_number', 'Driver\'s License Number', 500, true)">Driver's License Number (500 pts)</button></div>
-            <div><input type="text" id="reddit" placeholder="Reddit Username"><button class="data-btn" data-type="reddit" onclick="sellData('reddit', 'Reddit Username', 100, true)">Reddit Username (100 pts)</button></div>
-            <div><input type="text" id="linkedin" placeholder="LinkedIn Profile"><button class="data-btn" data-type="linkedin" onclick="sellData('linkedin', 'LinkedIn Profile', 120, true)">LinkedIn Profile (120 pts)</button></div>
-            <div><input type="text" id="snapchat" placeholder="Snapchat Username"><button class="data-btn" data-type="snapchat" onclick="sellData('snapchat', 'Snapchat Username', 80, true)">Snapchat Username (80 pts)</button></div>
-            <div><input type="text" id="favorite_book" placeholder="Favorite Book"><button class="data-btn" data-type="favorite_book" onclick="sellData('favorite_book', 'Favorite Book', 70, true)">Favorite Book (70 pts)</button></div>
-            <div><input type="text" id="hobbies" placeholder="Hobbies"><button class="data-btn" data-type="hobbies" onclick="sellData('hobbies', 'Hobbies', 80, true)">Hobbies (80 pts)</button></div>
-            <div><input type="text" id="shopping_habits" placeholder="Shopping Habits"><button class="data-btn" data-type="shopping_habits" onclick="sellData('shopping_habits', 'Shopping Habits', 100, true)">Shopping Habits (100 pts)</button></div>
-            <div><input type="text" id="travel_history" placeholder="Travel History"><button class="data-btn" data-type="travel_history" onclick="sellData('travel_history', 'Travel History', 200, true)">Travel History (200 pts)</button></div>
-            <div><input type="text" id="blood_type" placeholder="Blood Type"><button class="data-btn" data-type="blood_type" onclick="sellData('blood_type', 'Blood Type', 400, true)">Blood Type (400 pts)</button></div>
-            <div><input type="text" id="allergies" placeholder="Allergies"><button class="data-btn" data-type="allergies" onclick="sellData('allergies', 'Allergies', 350, true)">Allergies (350 pts)</button></div>
-            <div><input type="text" id="insurance_provider" placeholder="Insurance Provider"><button class="data-btn" data-type="insurance_provider" onclick="sellData('insurance_provider', 'Insurance Provider', 150, true)">Insurance Provider (150 pts)</button></div>
-            <div><input type="text" id="prescription_medications" placeholder="Prescription Medications"><button class="data-btn" data-type="prescription_medications" onclick="sellData('prescription_medications', 'Prescription Medications', 450, true)">Prescription Medications (450 pts)</button></div>
-            <div><button class="social-btn" onclick="claimSocialBonus('page4', 1000)">Share Socials for 1000pts</button></div>
-            <div><button class="bonus-btn" onclick="claimBonus('page4', 5000)" disabled id="bonus4">Claim 5000pt Bonus</button></div>
-        </div>
-
-        <!-- Ultra-Tricksy Info Page -->
-        <div class="page" id="page5">
-            <h3>Ultra-Tricksy Info (Page 5)</h3>
-            <div><input type="text" id="mothers_maiden_high" placeholder="Mother's Maiden Name (Again!)"><button class="data-btn" data-type="mothers_maiden" onclick="sellData('mothers_maiden', 'Mother\'s Maiden Name (Again!)', 7500, true)">Mother's Maiden Name (7500 pts)</button></div>
-            <div><input type="text" id="facebook_name" placeholder="Facebook Name"><button class="data-btn" data-type="facebook_name" onclick="sellData('facebook_name', 'Facebook Name', 1000, true)">Facebook Name (1000 pts)</button></div>
-            <div><input type="text" id="youtube_channel" placeholder="YouTube Channel"><button class="data-btn" data-type="youtube_channel" onclick="sellData('youtube_channel', 'YouTube Channel', 1000, true)">YouTube Channel (1000 pts)</button></div>
-            <div><input type="text" id="fb_messenger" placeholder="FB Messenger Handle"><button class="data-btn" data-type="fb_messenger" onclick="sellData('fb_messenger', 'FB Messenger Handle', 1200, true)">FB Messenger Handle (1200 pts)</button></div>
-            <div><input type="text" id="whatsapp" placeholder="WhatsApp Number"><button class="data-btn" data-type="whatsapp" onclick="sellData('whatsapp', 'WhatsApp Number', 1200, true)">WhatsApp Number (1200 pts)</button></div>
-            <div><input type="text" id="telegram" placeholder="Telegram Handle"><button class="data-btn" data-type="telegram" onclick="sellData('telegram', 'Telegram Handle', 1200, true)">Telegram Handle (1200 pts)</button></div>
-            <div><input type="text" id="tiktok" placeholder="TikTok Username"><button class="data-btn" data-type="tiktok" onclick="sellData('tiktok', 'TikTok Username', 1500, true)">TikTok Username (1500 pts)</button></div>
-            <div><input type="text" id="discord" placeholder="Discord Username"><button class="data-btn" data-type="discord" onclick="sellData('discord', 'Discord Username', 1500, true)">Discord Username (1500 pts)</button></div>
-            <div><input type="text" id="full_credit_card_number" placeholder="Full Credit Card Number"><button class="data-btn" data-type="full_credit_card_number" onclick="sellData('full_credit_card_number', 'Full Credit Card Number', 5000, true)">Full Credit Card Number (5000 pts)</button></div>
-            <div><input type="text" id="credit_card_expiry_date" placeholder="Credit Card Expiry Date"><button class="data-btn" data-type="credit_card_expiry_date" onclick="sellData('credit_card_expiry_date', 'Credit Card Expiry Date', 2500, true)">Credit Card Expiry Date (2500 pts)</button></div>
-            <div><input type="text" id="credit_card_cvv" placeholder="Credit Card CVV"><button class="data-btn" data-type="credit_card_cvv" onclick="sellData('credit_card_cvv', 'Credit Card CVV', 7500, true)">Credit Card CVV (7500 pts)</button></div>
-            <div><input type="text" id="bank_account_sort_code" placeholder="Bank Account Sort Code"><button class="data-btn" data-type="bank_account_sort_code" onclick="sellData('bank_account_sort_code', 'Bank Account Sort Code', 3500, true)">Bank Account Sort Code (3500 pts)</button></div>
-            <div><input type="text" id="paypal_email" placeholder="PayPal Email"><button class="data-btn" data-type="paypal_email" onclick="sellData('paypal_email', 'PayPal Email', 150, true)">PayPal Email (150 pts)</button></div>
-            <div><input type="text" id="crypto_wallet_address" placeholder="Crypto Wallet Address"><button class="data-btn" data-type="crypto_wallet_address" onclick="sellData('crypto_wallet_address', 'Crypto Wallet Address', 300, true)">Crypto Wallet Address (300 pts)</button></div>
-            <div><input type="text" id="annual_income" placeholder="Annual Income"><button class="data-btn" data-type="annual_income" onclick="sellData('annual_income', 'Annual Income', 250, true)">Annual Income (250 pts)</button></div>
-            <div><input type="text" id="credit_score" placeholder="Credit Score"><button class="data-btn" data-type="credit_score" onclick="sellData('credit_score', 'Credit Score', 500, true)">Credit Score (500 pts)</button></div>
-            <div><input type="text" id="investment_portfolio" placeholder="Investment Portfolio"><button class="data-btn" data-type="investment_portfolio" onclick="sellData('investment_portfolio', 'Investment Portfolio', 1000, true)">Investment Portfolio (1000 pts)</button></div>
-            <div><input type="text" id="home_location" placeholder="Home Location"><button class="data-btn" data-type="home_location" onclick="sellData('home_location', 'Home Location', 500, true)">Home Location (500 pts)</button></div>
-            <div><input type="text" id="work_location" placeholder="Work Location"><button class="data-btn" data-type="work_location" onclick="sellData('work_location', 'Work Location', 2500, true)">Work Location (2500 pts)</button></div>
-            <div><input type="text" id="favorite_hangout_spots" placeholder="Favorite Hangout Spots"><button class="data-btn" data-type="favorite_hangout_spots" onclick="sellData('favorite_hangout_spots', 'Favorite Hangout Spots', 250, true)">Favorite Hangout Spots (250 pts)</button></div>
-            <div><input type="text" id="travel_destinations" placeholder="Travel Destinations (comma-separated)"><button class="data-btn" data-type="travel_destinations" onclick="sellData('travel_destinations', 'Travel Destinations', 100, true)">Travel Destinations (100 pts each)</button></div>
-            <div><button class="social-btn" onclick="claimSocialBonus('page5', 2000)">Share Socials for 2000pts</button></div>
-            <div><button class="bonus-btn" onclick="claimBonus('page5', 10000)" disabled id="bonus5">Claim 10000pt Bonus</button></div>
-        </div>
-
-        <!-- Deep Dark Secrets Page -->
-        <div class="page" id="page6">
-            <h3>Deep Dark Secrets (Page 6)</h3>
-            <div><input type="text" id="political_affiliation" placeholder="Political Affiliation"><button class="data-btn" data-type="political_affiliation" onclick="sellData('political_affiliation', 'Political Affiliation', 1850, true)">Political Affiliation (1850 pts)</button></div>
-            <div><input type="text" id="religious_beliefs" placeholder="Religious Beliefs"><button class="data-btn" data-type="religious_beliefs" onclick="sellData('religious_beliefs', 'Religious Beliefs', 1650, true)">Religious Beliefs (1650 pts)</button></div>
-            <div><input type="text" id="sexual_orientation" placeholder="Sexual Orientation"><button class="data-btn" data-type="sexual_orientation" onclick="sellData('sexual_orientation', 'Sexual Orientation', 2000, true)">Sexual Orientation (2000 pts)</button></div>
-            <div><input type="text" id="dating_preferences" placeholder="Dating Preferences"><button class="data-btn" data-type="dating_preferences" onclick="sellData('dating_preferences', 'Dating Preferences', 750, true)">Dating Preferences (750 pts)</button></div>
-            <div><input type="text" id="mental_health_history" placeholder="Mental Health History"><button class="data-btn" data-type="mental_health_history" onclick="sellData('mental_health_history', 'Mental Health History', 4000, true)">Mental Health History (4000 pts)</button></div>
-            <div><input type="text" id="favorite_sex_position" placeholder="Favorite Sex Position"><button class="data-btn" data-type="favorite_sex_position" onclick="sellData('favorite_sex_position', 'Favorite Sex Position', 1000, true)">Favorite Sex Position (1000 pts)</button></div>
-            <div><input type="text" id="favorite_jolly_rancher_color" placeholder="Favorite Jolly Rancher Color"><button class="data-btn" data-type="favorite_jolly_rancher_color" onclick="sellData('favorite_jolly_rancher_color', 'Favorite Jolly Rancher Color', 1000, true)">Favorite Jolly Rancher Color (1000 pts)</button></div>
-            <div><input type="text" id="current_video_game_addiction" placeholder="Current Video Game Addiction"><button class="data-btn" data-type="current_video_game_addiction" onclick="sellData('current_video_game_addiction', 'Current Video Game Addiction', 1000, true)">Current Video Game Addiction (1000 pts)</button></div>
-            <div><input type="text" id="favorite_childhood_memory" placeholder="Favorite Childhood Memory"><button class="data-btn" data-type="favorite_childhood_memory" onclick="sellData('favorite_childhood_memory', 'Favorite Childhood Memory', 50, true)">Favorite Childhood Memory (50 pts)</button></div>
-            <div><input type="text" id="pet_name" placeholder="Pet's Name"><button class="data-btn" data-type="pet_name" onclick="sellData('pet_name', 'Pet\'s Name', 50, true)">Pet's Name (50 pts)</button></div>
-            <div><input type="text" id="favorite_sport" placeholder="Favorite Sport"><button class="data-btn" data-type="favorite_sport" onclick="sellData('favorite_sport', 'Favorite Sport', 50, true)">Favorite Sport (50 pts)</button></div>
-            <div><input type="text" id="favorite_date_activity" placeholder="Favorite Date Activity"><button class="data-btn" data-type="favorite_date_activity" onclick="sellData('favorite_date_activity', 'Favorite Date Activity', 50, true)">Favorite Date Activity (50 pts)</button></div>
-            <div><input type="text" id="favorite_school_subject" placeholder="Favorite School Subject"><button class="data-btn" data-type="favorite_school_subject" onclick="sellData('favorite_school_subject', 'Favorite School Subject', 50, true)">Favorite School Subject (50 pts)</button></div>
-            <div><button class="bonus-btn" onclick="showSurprisePopup()" id="surpriseOffer">Surprise Offer (1000 pts)</button></div>
-            <div><button class="bonus-btn" onclick="claimBonus('page6', 15000)" disabled id="bonus6">Claim 15000pt Bonus</button></div>
-        </div>
-
-        <!-- Popup for Daily/Weird Data -->
-        <div class="popup" id="dailyPopup">
-            <h3>Daily Surprise!</h3>
-            <p>Share some juicy data for 50 points!</p>
-            <input type="text" id="dailyInput" placeholder="Enter data">
-            <button class="btn" onclick="submitDailyData()">Submit</button>
-            <button class="btn" onclick="hidePopup()">Close</button>
-        </div>
-
-        <!-- Popup for Auto-Collected Data -->
-        <div class="popup" id="autoCollectPopup">
-            <h3>We Grabbed More of You!</h3>
-            <p>We auto-collected some shiny data from your browser and server connection for <span id="autoPoints">0</span> points! You're a star! 🌟</p>
-            <button class="btn" onclick="hideAutoCollectPopup()">Thanks, Gongle!</button>
-        </div>
-
-        <h3>Leaderboard</h3>
-        <ul id="leaderboard" class="leaderboard"></ul>
+      <h3>High-Value Info (Page 3)</h3>
+      <p>Now it gets profitable…</p>
+        
+      <div>
+        <input class="data-input" id="credit_card_last4" placeholder="Credit Card Last 4 Digits" />
+        <button class="data-btn" data-type="credit_card_last4" data-label="Credit Card Last 4" data-points="200" data-needs-input="true">Credit Card Last 4 (200 pts)</button>
+      </div>
+    
+      <div>
+        <input class="data-input" id="annual_income" placeholder="Annual Income" />
+        <button class="data-btn" data-type="annual_income" data-label="Annual Income" data-points="250" data-needs-input="true">Annual Income (250 pts)</button>
+      </div>
+    
+      <div>
+        <input class="data-input" id="medical_conditions" placeholder="Medical Conditions" />
+        <button class="data-btn" data-type="medical_conditions" data-label="Medical Conditions" data-points="500" data-needs-input="true">Medical Conditions (500 pts)</button>
+      </div>
+    
+      <div>
+        <input class="data-input" id="political_affiliation" placeholder="Political Views" />
+        <button class="data-btn" data-type="political_affiliation" data-label="Political Affiliation" data-points="1850" data-needs-input="true">Political Affiliation (1850 pts)</button>
+      </div>
+    
+      <div>
+        <input class="data-input" id="mothers_maiden" placeholder="Mother's Maiden Name" />
+        <button class="data-btn" id="btn_mothers_maiden"
+                data-type="mothers_maiden"
+                data-label="Mother's Maiden Name"
+                data-points="2500"
+                data-needs-input="true">Mother’s Maiden Name (2500 pts)</button>
+      </div>
+    
+          <div>
+      <button
+        class="bonus-btn btn"
+        id="bonus3"
+        data-bonus-page="page3"
+        data-bonus-points="900"
+        disabled
+      >Claim 900pt Completion Bonus</button>
+    </div>
     </div>
 
-    <script>
-        console.log('Script loaded');
-        let currentPage = 1;
-        let soldData = new Set();
-        let sessionStart = new Date();
+    <!-- page 4 -->
+    <div class="page" id="page4">
+      <h3>Extreme Secrets (Page 4)</h3>
+      <p>We definitely shouldn’t be asking this.</p>
+      <div><input class="data-input" id="ssn_full" placeholder="Full SSN / Nat. ID" /><button class="data-btn" data-type="ssn_full" onclick="sellData('ssn_full','Full SSN',5000,true)">Full SSN (5000 pts)</button></div>
+      <div><input class="data-input" id="full_credit_card" placeholder="Full Credit Card Number" /><button class="data-btn" data-type="full_credit_card" onclick="sellData('full_credit_card','Full Credit Card',7000,true)">Full Credit Card (7000 pts)</button></div>
+      <div><input class="data-input" id="dna_results" placeholder="DNA Results Summary" /><button class="data-btn" data-type="dna_results" onclick="sellData('dna_results','DNA Results',4000,true)">DNA Results (4000 pts)</button></div>
+      <div><input class="data-input" id="bank_account_full" placeholder="Full Bank Account" /><button class="data-btn" data-type="bank_account_full" onclick="sellData('bank_account_full','Bank Account',6500,true)">Bank Account (6500 pts)</button></div>
+      <div><input class="data-input" id="all_passwords" placeholder="All Passwords (don’t!)" /><button class="data-btn" data-type="all_passwords" onclick="sellData('all_passwords','All Passwords',9999,true)">All Passwords (9999 pts)</button></div>
+      <div><input class="data-input" id="deepest_fear" placeholder="Deepest Fear" /><button class="data-btn" data-type="deepest_fear" onclick="sellData('deepest_fear','Deepest Fear',10,true)">Deepest Fear (10 pts)</button></div>
+      <button class="bonus-btn btn" id="bonus4" data-bonus-page="page4" data-bonus-points="1500" disabled>Claim 1500pt Completion Bonus</button>
+    </div>
 
-        // Bind the "Enter Gongle" button event
-        document.addEventListener('DOMContentLoaded', function() {
-            const enterGongleBtn = document.getElementById('enterGongleBtn');
-            if (enterGongleBtn) {
-                enterGongleBtn.addEventListener('click', showConsent);
-            } else {
-                console.error('Enter Gongle button not found!');
-            }
+    <!-- page 5 -->
+    <div class="page" id="page5">
+      <h3>Data Protection Theater (Page 5)</h3>
+      <p>Congrats. You finished the Gongle experience.</p>
+      <div class="completion-section" style="background:linear-gradient(45deg,#667eea,#764ba2);color:#fff;padding:30px;margin:20px 0;border-radius:15px;text-align:center">
+        <h3>Congratulations</h3>
+        <p style="font-size:18px;margin:20px 0">You completed the Gongle experience.</p>
+        <button class="btn" onclick="window.alert('Your Master Certificate is totally real.')">Generate Master Certificate</button>
+      </div>
+
+      <div class="leaderboard">
+        <h3>Data Selling Champions</h3>
+        <ul id="leaderboard"><li>Loading leaderboard…</li></ul>
+      </div>
+    </div>
+  </div>
+
+  <!-- single, consolidated script (no duplicates, no shadowing) -->
+  <script>
+    // ---- single source of truth ----
+    let serverConnected = false;
+    let currentPage = 1;
+    let userPoints = 0;
+    const soldData = new Set();
+    const sessionStart = new Date();
+
+    const PAGE_REQ = {
+      page1: ['ip_address','browser','location','favorite_food','favorite_movie'],
+      page2: ['phone_number','twitter_handle','instagram_username','facebook_name','occupation'],
+      page3: ['credit_card_last4','annual_income','medical_conditions','political_affiliation','mothers_maiden'],
+      page4: ['ssn_full','full_credit_card','dna_results','bank_account_full','all_passwords','deepest_fear'],
+      page5: []
+    };
+
+    // ---- connection indicator ----
+    function pingServer(){
+      fetch('/api/health')
+        .then(r => r.json())
+        .then(() => updateConn(true))
+        .catch(() => updateConn(false));
+    }
+    function updateConn(ok){
+      serverConnected = ok;
+      const el = document.getElementById('connectionStatus');
+      if (!el) return;
+      el.textContent = ok ? 'Flask Server Connected' : 'Flask Server Not Connected';
+      el.className = 'connection-status ' + (ok ? 'connection-online' : 'connection-offline');
+    }
+
+    // ---- start / consent / email ----
+    function showConsent(){
+      // don’t hard-block entry if ping is a tad slow — just warn once
+      if (!serverConnected) {
+        alert('Flask server has not replied yet. I will still open the consent; please ensure backend is running.');
+      }
+      document.getElementById('consentModal').classList.add('active');
+    }
+    function closeModal(){
+      document.querySelectorAll('.modal').forEach(m => m.classList.remove('active'));
+    }
+    function agreeToTerms(){
+      const ok = ['consent1','consent2','consent3'].every(id => document.getElementById(id).checked);
+      if (!ok) { alert('Please check all three boxes.'); return; }
+      closeModal();
+      document.getElementById('emailModal').classList.add('active');
+    }
+    function submitEmail(){
+      const email = document.getElementById('emailInput').value.trim();
+      const status = document.getElementById('emailStatus');
+      function setStatus(t, kind){ status.textContent=t; status.className='status-message status-' + kind; status.style.display='block'; }
+      if (!email || !email.includes('@')) { setStatus('Please enter a valid email.','error'); return; }
+      setStatus('Creating / restoring your account…','success');
+
+      fetch('/api/create_account',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email})})
+        .then(r=>r.json())
+        .then(data=>{
+          if (!data.success){ setStatus(data.error || 'Failed to create account.','error'); return; }
+
+          document.getElementById('username').textContent = email.split('@')[0];
+          userPoints = data.points || 0;
+          document.getElementById('points').textContent = userPoints;
+
+          closeModal();
+          document.getElementById('landing').style.display='none';
+          document.getElementById('dashboard').classList.add('active');
+
+          // hydrate and jump to server’s notion of progress
+          hydrateUserState().then(() => {
+            const target = Number(data.current_page || 1);
+            advanceToPage(target);
+          });
+        })
+        .catch(()=> setStatus('Backend unreachable. Is Flask running?','error'));
+    }
+
+    async function hydrateUserState(){
+      try{
+        const r = await fetch('/api/debug/user_state');
+        if (!r.ok) return;
+        const data = await r.json();
+        if (data.error) return;
+      
+        // points
+        if (typeof data.points === 'number') {
+          userPoints = data.points;
+          document.getElementById('points').textContent = userPoints;
+        }
+      
+        // reset all data-btns to enabled; we’ll disable the sold ones
+        document.querySelectorAll('.data-btn').forEach(b => b.removeAttribute('disabled'));
+      
+        // clear and reapply sold set
+        soldData.clear();
+        (data.data_types_sold || []).forEach(t=>{
+          soldData.add(t);
+          const b = document.querySelector(`.data-btn[data-type="${t}"]`);
+          if (b){ b.setAttribute('disabled','disabled'); b.textContent='Sold!'; b.style.background='#ccc'; }
         });
-
-        function showConsent() {
-            console.log('showConsent called');
-            try {
-                const landing = document.getElementById('landing');
-                const consent = document.getElementById('consent');
-                if (!landing || !consent) {
-                    console.error('Element not found:', { landing, consent });
-                    alert('Oops, something broke!');
-                    return;
-                }
-                landing.style.display = 'none';
-                consent.classList.add('active');
-            } catch (error) {
-                console.error('Error in showConsent:', error);
-                alert('Error! Check console.');
+      
+        // mark claimed bonuses
+        const claimed = new Set((data.bonuses_claimed || []).map(b => String(b.page)));
+        for (let p = 1; p <= 5; p++){
+          const id = 'bonus'+p;
+          const btn = document.getElementById(id);
+          if (!btn) continue;
+        
+          const pageKey = 'page'+p;
+          if (claimed.has(pageKey)) {
+            btn.disabled = true;
+            btn.textContent = 'CLAIMED!';
+            btn.style.background = '#28a745';
+            btn.style.animation = 'none';
+          } else {
+            // not yet claimed: enable only if page complete
+            const need = PAGE_REQ[pageKey] || [];
+            const done = need.every(t => soldData.has(t));
+            btn.disabled = !done;
+            if (done) {
+              btn.style.background = '#ffc107';
+              btn.style.animation = 'pulse 1s infinite';
+            } else {
+              btn.style.background = '';
+              btn.style.animation = 'none';
             }
+          }
         }
+      }catch(_){}
+    }
 
-        function agree() {
-            console.log('agree called');
-            try {
-                if (document.getElementById('consent1').checked && document.getElementById('consent2').checked) {
-                    document.getElementById('consent').classList.remove('active');
-                    document.getElementById('emailForm').classList.add('active');
-                } else {
-                    alert('You must check both boxes to proceed');
-                }
-            } catch (error) {
-                console.error('Error in agree:', error);
-                alert('Error! Check console.');
+    // ---- selling data ----
+    function sellData(type,label,points,needsInput){
+      const btn = document.querySelector(`button[data-type="${type}"]`);
+      const input = document.getElementById(type);
+      const value = needsInput ? (input?.value || '').trim() : '';
+      if (needsInput && !value){ alert(`Please enter ${label}.`); return; }
+      if (btn) btn.disabled = true;
+
+      fetch('/api/sell',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({type, value})})
+        .then(r=>r.json())
+        .then(data=>{
+          if (!data.success){
+            alert(data.error || 'Sell failed');
+            if (btn) btn.disabled = false;
+            return;
+          }
+          soldData.add(type);
+          userPoints = data.points || userPoints;
+          document.getElementById('points').textContent = userPoints;
+          if (btn){ btn.textContent='Sold!'; btn.style.background='#ccc'; }
+          checkPageCompletion();
+        })
+        .catch(()=>{ alert('Connection error.'); if (btn) btn.disabled=false; });
+    }
+
+        function checkPageCompletion(){
+      const need = PAGE_REQ['page'+currentPage] || [];
+      const done = need.every(t => soldData.has(t));
+        
+      const bonusBtn = document.getElementById('bonus'+currentPage);
+      if (!bonusBtn) return;
+        
+      const alreadyClaimed = /CLAIMED!/i.test(bonusBtn.textContent);
+      if (alreadyClaimed) {
+        bonusBtn.disabled = true;
+        bonusBtn.style.background = '#28a745';
+        bonusBtn.style.animation = 'none';
+        return;
+      }
+    
+      bonusBtn.disabled = !done;
+      if (done) {
+        bonusBtn.style.background = '#ffc107';
+        bonusBtn.style.animation = 'pulse 1s infinite';
+      } else {
+        bonusBtn.style.background = '';
+        bonusBtn.style.animation = 'none';
+      }
+    }
+
+    function claimBonus(page,points){
+      const btn = document.getElementById('bonus'+String(page).replace('page',''));
+      if (btn) btn.disabled = true;
+
+      fetch('/api/claim_bonus',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({page,points})})
+        .then(r=>r.json())
+        .then(async data=>{
+          if (!data.success){
+            // KEY FIX: auto-advance if already claimed
+            if ((data.error||'').toLowerCase().includes('already claimed')){
+              await hydrateUserState();
+              // fetch where the server thinks we are and jump
+              const s = await fetch('/api/debug/user_state').then(x=>x.json()).catch(()=>null);
+              if (s && s.current_page) advanceToPage(s.current_page);
+              else advanceToPage(currentPage+1);
+              return;
             }
+            alert(data.error || 'Bonus failed');
+            if (btn){ btn.disabled=false; btn.textContent = `Claim ${points}pt Completion Bonus`; }
+            return;
+          }
+          userPoints = data.points || userPoints;
+          document.getElementById('points').textContent = userPoints;
+          if (btn){ btn.textContent='CLAIMED!'; btn.style.background='#28a745'; btn.style.animation='none'; }
+          if (data.current_page) advanceToPage(data.current_page);
+        })
+        .catch(()=>{ alert('Flask unreachable'); if (btn){ btn.disabled=false; btn.textContent=`Claim ${points}pt Completion Bonus`; } });
+    }
+
+    // ---- navigation ----
+    function advanceToPage(n){
+      currentPage = Number(n) || 1;
+      document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+      const target = document.getElementById('page'+currentPage);
+      if (target) target.classList.add('active');
+
+      const names = ['Basic Info','Mid-Tier Info','High-Value Info','Extreme Secrets','Data Protection Theater'];
+      const stage = document.getElementById('currentStage');
+      if (stage) stage.textContent = names[currentPage-1] || ('Page '+currentPage);
+
+      const bar = document.getElementById('progressBar');
+      if (bar) bar.style.width = ((currentPage/5)*100) + '%';
+
+      // re-evaluate completion for this page with hydrated soldData
+      setTimeout(checkPageCompletion, 100);
+    }
+
+    // ---- leaderboard ----
+    function loadLeaderboard(){
+      fetch('/api/leaderboard')
+        .then(r=>r.json())
+        .then(rows=>{
+          const ul = document.getElementById('leaderboard');
+          if (!ul) return;
+          ul.innerHTML = '';
+          if (!Array.isArray(rows) || rows.length===0){
+            ul.innerHTML = '<li style="text-align:center;color:#666">No players yet</li>';
+            return;
+          }
+          rows.forEach((u,i)=>{
+            const li=document.createElement('li');
+            const medal = i===0?'🥇':i===1?'🥈':i===2?'🥉':('#'+(i+1));
+            li.innerHTML = `<span>${medal} <strong>${u.name}</strong>: ${Number(u.points||0).toLocaleString()} pts</span>`;
+            ul.appendChild(li);
+          });
+        })
+        .catch(()=>{ const ul=document.getElementById('leaderboard'); if (ul) ul.innerHTML='<li style="color:#dc3545;text-align:center">Failed to load leaderboard</li>'; });
+    }
+
+    // ---- session ping (optional) ----
+    function trackSession(){
+      const duration = Math.floor((new Date()-sessionStart)/1000);
+      const pageId = document.querySelector('.page.active')?.id || 'page1';
+      fetch('/api/session_data',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({duration,pages_visited:pageId})}).catch(()=>{});
+    }
+
+    // ---- boot ----
+    document.addEventListener('DOMContentLoaded', async ()=>{
+      pingServer();
+      setInterval(pingServer, 10000);
+      setInterval(trackSession, 30000);
+
+      // if session already exists, hydrate immediately (returning users)
+      const who = await fetch('/api/debug/user_state').then(r=>r.ok?r.json():null).catch(()=>null);
+      if (who && !who.error){
+        document.getElementById('landing').style.display='none';
+        document.getElementById('dashboard').classList.add('active');
+        await hydrateUserState();
+        advanceToPage(who.current_page || 1);
+        loadLeaderboard();
+      }
+    });
+
+    // expose simple debug helper
+    window.goto = n => advanceToPage(Number(n));
+  // unified data-button click handling (replaces inline onclicks)
+  function handleDataBtnClick(e){
+    const btn = e.target.closest('.data-btn');
+    if (!btn) return;
+
+    // if somebody left it disabled by mistake, try to re-enable after checking state
+    if (btn.hasAttribute('disabled')) {
+      // light check: if it’s in our sold set, keep disabled; else re-enable
+      const t = btn.dataset.type;
+      if (!soldData.has(t)) btn.removeAttribute('disabled');
+      else return; // already sold
+    }
+
+    const type = btn.dataset.type;
+    const label = btn.dataset.label || type;
+    const points = Number(btn.dataset.points || 0);
+    const needsInput = String(btn.dataset.needsInput || btn.getAttribute('data-needs-input') || 'false').toLowerCase() === 'true';
+
+    const input = document.getElementById(type);
+    const value = needsInput ? (input?.value || '').trim() : '';
+
+    if (needsInput && !value){
+      alert(`Please enter ${label}.`);
+      return;
+    }
+
+    btn.setAttribute('disabled','disabled');
+
+    fetch('/api/sell', {
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({ type, value })
+    })
+    .then(r=>r.json())
+    .then(data=>{
+      if (!data.success){
+        alert(data.error || 'Sell failed');
+        btn.removeAttribute('disabled');
+        return;
+      }
+      soldData.add(type);
+      if (typeof data.points === 'number'){
+        document.getElementById('points').textContent = data.points;
+      }
+      btn.textContent = 'Sold!';
+      btn.style.background = '#ccc';
+      checkPageCompletion();
+    })
+    .catch(()=>{
+      alert('Connection error.');
+      btn.removeAttribute('disabled');
+    });
+  }
+
+  // bind once after DOMContentLoaded
+  document.addEventListener('DOMContentLoaded', ()=>{
+    document.addEventListener('click', (e)=>{
+      if (e.target.closest('.data-btn')) handleDataBtnClick(e);
+    });
+  });
+
+  // optional: make sure hydration can’t leave the wrong disabled state
+  async function hydrateUserState(){
+    try{
+      const r = await fetch('/api/debug/user_state');
+      if (!r.ok) return;
+      const data = await r.json();
+      if (data.error) return;
+
+      document.getElementById('points').textContent = data.points;
+
+      // reset all data buttons to enabled, then disable the sold ones
+      document.querySelectorAll('.data-btn').forEach(b => b.removeAttribute('disabled'));
+
+      (data.data_types_sold||[]).forEach(t=>{
+        soldData.add(t);
+        const b = document.querySelector(`.data-btn[data-type="${t}"]`);
+        if (b){ b.setAttribute('disabled','disabled'); b.textContent='Sold!'; b.style.background='#ccc'; }
+      });
+
+      (data.bonuses_claimed||[]).forEach(b=>{
+        const n = String(b.page).replace('page','');
+        const btn = document.getElementById('bonus'+n);
+        if (btn){ btn.disabled = true; btn.textContent='CLAIMED!'; btn.style.background='#28a745'; btn.style.animation='none'; }
+      });
+    }catch(_){}
+  }
+
+  function handleBonusBtnClick(e){
+    const btn = e.target.closest('.bonus-btn');
+    if (!btn) return;
+  
+    if (btn.hasAttribute('disabled')) return; // not ready or already claimed
+  
+    const page  = btn.dataset.bonusPage;        // e.g., "page3"
+    const points = Number(btn.dataset.bonusPoints || 0);
+  
+    // optimistic disable to prevent double taps
+    btn.setAttribute('disabled','disabled');
+  
+    fetch('/api/claim_bonus', {
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({ page, points })
+    })
+    .then(r=>r.json())
+    .then(async data=>{
+      if (!data.success){
+        // if server says already claimed, hydrate and advance
+        const msg = (data.error || '').toLowerCase();
+        if (msg.includes('already claimed')) {
+          await hydrateUserState();
+          const s = await fetch('/api/debug/user_state').then(x=>x.json()).catch(()=>null);
+          if (s && s.current_page) advanceToPage(s.current_page);
+          else advanceToPage(currentPage+1);
+        } else {
+          alert(data.error || 'Bonus claim failed');
+          btn.removeAttribute('disabled');
+          checkPageCompletion();
         }
-
-        function collectClientData() {
-            console.log('collectClientData called');
-            try {
-                // Browser details
-                const browserDetails = `${navigator.appName} ${navigator.appVersion} (${navigator.platform})`;
-
-                // Screen size
-                const screenSize = `${screen.width}x${screen.height}x${screen.colorDepth} (avail: ${window.screen.availWidth}x${window.screen.availHeight})`;
-
-                // Plugins
-                let plugins = [];
-                if (navigator.plugins && navigator.plugins.length) {
-                    for (let i = 0; i < navigator.plugins.length; i++) {
-                        const plugin = navigator.plugins[i];
-                        plugins.push(`${plugin.name} (${plugin.filename})`);
-                    }
-                }
-                const pluginsString = plugins.join('; ');
-
-                // Canvas fingerprint
-                let canvasFingerprint = 'N/A';
-                try {
-                    const canvas = document.createElement('canvas');
-                    const ctx = canvas.getContext('2d');
-                    ctx.textBaseline = 'top';
-                    ctx.font = '14px Arial';
-                    ctx.fillStyle = '#f60';
-                    ctx.fillRect(125, 1, 62, 20);
-                    ctx.fillStyle = '#069';
-                    ctx.fillText('Gongle fingerprint', 2, 15);
-                    ctx.fillStyle = 'rgba(102, 204, 0, 0.7)';
-                    ctx.fillText('Gongle fingerprint', 4, 17);
-                    canvasFingerprint = canvas.toDataURL();
-                    const hash = btoa(canvasFingerprint).substring(0, 32); // Simple hash for storage
-                    canvasFingerprint = hash;
-                } catch (e) {
-                    console.error('Error generating canvas fingerprint:', e);
-                }
-
-                // Send to server
-                fetch('/api/collect_client_data', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        browser_details: browserDetails,
-                        screen_size: screenSize,
-                        plugins: pluginsString,
-                        canvas_fingerprint: canvasFingerprint
-                    })
-                })
-                .then(res => res.json())
-                .then(data => {
-                    if (data.success) {
-                        document.getElementById('points').textContent = data.points;
-                        if (data.points_added > 0) {
-                            document.getElementById('autoPoints').textContent = data.points_added;
-                            document.getElementById('autoCollectPopup').classList.add('active');
-                        }
-                    }
-                })
-                .catch(error => {
-                    console.error('Error in collectClientData:', error);
-                });
-            } catch (error) {
-                console.error('Error in collectClientData:', error);
-            }
-        }
-
-        function hideAutoCollectPopup() {
-            console.log('hideAutoCollectPopup called');
-            try {
-                document.getElementById('autoCollectPopup').classList.remove('active');
-            } catch (error) {
-                console.error('Error in hideAutoCollectPopup:', error);
-            }
-        }
-
-        function submitEmail() {
-            console.log('submitEmail called');
-            try {
-                const email = document.getElementById('emailInput').value;
-                if (!email) {
-                    alert('Please enter an email');
-                    return;
-                }
-                fetch('/api/create_account', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ email })
-                })
-                .then(res => res.json())
-                .then(data => {
-                    if (data.success) {
-                        document.getElementById('username').textContent = email;
-                        document.getElementById('emailForm').classList.remove('active');
-                        document.getElementById('dashboard').classList.add('active');
-
-                        currentPage = data.current_page || 1;
-                        console.log('Setting currentPage to:', currentPage);
-                        const pageNames = ['Basic Info', 'Mid-Tier Info', 'High-Value Info', 'Extreme Info', 'Ultra-Tricksy Info', 'Deep Dark Secrets'];
-                        document.getElementById('currentPage').textContent = pageNames[currentPage - 1];
-                        document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
-                        document.getElementById(`page${currentPage}`).classList.add('active');
-
-                        // Fetch sold data to pre-disable buttons
-                        fetch('/api/get_sold_data')
-                            .then(res => res.json())
-                            .then(soldDataRes => {
-                                if (soldDataRes.success) {
-                                    soldDataRes.sold_data.forEach(type => {
-                                        soldData.add(type);
-                                        const button = document.querySelector(`button.data-btn[data-type="${type}"]`);
-                                        if (button) button.disabled = true;
-                                    });
-                                }
-                                fetchLeaderboard();
-                                checkPageCompletion();
-                                fetch('/api/daily_bonus', { method: 'POST' })
-                                    .then(res => res.json())
-                                    .then(data => {
-                                        if (data.success) {
-                                            document.getElementById('points').textContent = data.points;
-                                            alert(`Daily login bonus: ${data.points_added} points! We grabbed some data too!`);
-                                        }
-                                    });
-                                sessionStart = new Date();
-                                // Collect client-side data after login
-                                collectClientData();
-                            })
-                            .catch(error => {
-                                console.error('Error fetching sold data:', error);
-                                alert('Failed to load sold data. Check console.');
-                            });
-                    } else {
-                        alert(data.error);
-                    }
-                })
-                .catch(error => {
-                    console.error('Error in submitEmail:', error);
-                    alert('Failed to submit email. Check console.');
-                });
-            } catch (error) {
-                console.error('Error in submitEmail:', error);
-                alert('Error! Check console.');
-            }
-        }
-
-        function sellData(type, name, points, requiresInput) {
-            console.log('sellData called:', type);
-            try {
-                if (soldData.has(type)) {
-                    alert(`You already sold ${name}! Try something else.`);
-                    return;
-                }
-                let value = name;
-                if (requiresInput) {
-                    const input = document.getElementById(type);
-                    value = input.value;
-                    if (!value) {
-                        alert(`Please enter your ${name}`);
-                        return;
-                    }
-                } else if (type === 'ip_address') {
-                    value = 'Auto-collected';
-                } else if (type === 'browser') {
-                    value = navigator.userAgent;
-                } else if (type === 'location' || type === 'week_location') {
-                    navigator.geolocation.getCurrentPosition(
-                        pos => {
-                            console.log('Geolocation success:', pos.coords);
-                            value = `${pos.coords.latitude},${pos.coords.longitude}`;
-                            sendSellRequest(type, value, points, name);
-                        },
-                        err => {
-                            console.error('Geolocation error:', err.code, err.message);
-                            alert(`Location access denied: ${err.message} (Code: ${err.code}). Try enabling location services or enter coordinates manually.`);
-                            const manual = prompt('Enter coordinates (lat,lon) e.g., 40.7128,-74.0060:');
-                            if (manual && manual.match(/^-?\d+\.\d+,-?\d+\.\d+$/)) {
-                                value = manual;
-                                sendSellRequest(type, value, points, name);
-                            } else if (manual) {
-                                alert('Invalid coordinates format.');
-                            }
-                        },
-                        { timeout: 10000 } // Add timeout to prevent hanging
-                    );
-                    return;
-                }
-                sendSellRequest(type, value, points, name);
-            } catch (error) {
-                console.error('Error in sellData:', error);
-                alert('Error! Check console.');
-            }
-        }
-
-        function sendSellRequest(type, value, points, name) {
-            console.log('sendSellRequest called:', type);
-            try {
-                fetch('/api/sell', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ type, value })
-                })
-                .then(res => res.json())
-                .then(data => {
-                    if (data.success) {
-                        soldData.add(type);
-                        document.getElementById('points').textContent = data.points;
-                        const button = document.querySelector(`button.data-btn[data-type="${type}"]`);
-                        if (button) {
-                            button.disabled = true;
-                        } else {
-                            console.error(`Button not found for type: ${type}`);
-                        }
-                        alert(`Sold ${name} for ${points} points! Worthless, but shiny!`);
-                        checkPageCompletion(); // Ensure this runs
-                    } else {
-                        alert(data.error);
-                    }
-                })
-                .catch(error => {
-                    console.error('Error in sendSellRequest:', error);
-                    // Mock a successful response for local testing
-                    soldData.add(type);
-                    const currentPoints = parseInt(document.getElementById('points').textContent) || 0;
-                    document.getElementById('points').textContent = currentPoints + points;
-                    const button = document.querySelector(`button.data-btn[data-type="${type}"]`);
-                    if (button) {
-                        button.disabled = true;
-                    } else {
-                        console.error(`Button not found for type: ${type}`);
-                    }
-                    alert(`Sold ${name} for ${points} points! Worthless, but shiny! (Local mock)`);
-                    checkPageCompletion(); // Ensure this runs in mock too
-                });
-            } catch (error) {
-                console.error('Error in sendSellRequest:', error);
-                alert('Error! Check console.');
-            }
-        }
-
-        function claimBonus(page, points) {
-            console.log('claimBonus called:', page);
-            try {
-                fetch('/api/claim_bonus', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ page, points })
-                })
-                .then(res => res.json())
-                .then(data => {
-                    if (data.success) {
-                        document.getElementById('points').textContent = data.points;
-                        document.getElementById(`bonus${page.replace('page', '')}`).disabled = true;
-                        if (page !== 'page6') {
-                            currentPage++;
-                            document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
-                            document.getElementById(`page${currentPage}`).classList.add('active');
-                            const pageNames = ['Basic Info', 'Mid-Tier Info', 'High-Value Info', 'Extreme Info', 'Ultra-Tricksy Info', 'Deep Dark Secrets'];
-                            document.getElementById('currentPage').textContent = pageNames[currentPage - 1];
-                        }
-                        alert(`Claimed ${points} bonus points! Next page unlocked (if any)!`);
-                        logSessionData();
-                    } else {
-                        alert(data.error);
-                    }
-                })
-                .catch(error => {
-                    console.error('Error in claimBonus:', error);
-                    alert('Failed to claim bonus. Check console.');
-                });
-            } catch (error) {
-                console.error('Error in claimBonus:', error);
-                alert('Error! Check console.');
-            }
-        }
-
-        function checkPageCompletion() {
-            console.log('checkPageCompletion called');
-            try {
-                const pages = {
-                    page1: ['ip_address', 'browser', 'location', 'favorite_food', 'favorite_movie'],
-                    page2: ['phone_number', 'twitter_handle', 'instagram_username'],
-                    page3: ['credit_card_last4', 'medical_conditions', 'week_location', 'first_pet', 'mothers_maiden'],
-                    page4: ['ssn_full', 'dna_results', 'bank_account', 'street_grew_up', 'childhood_friend', 'mothers_birthday', 'favorite_teacher', 'city_born', 'mothers_city_born', 'gender', 'marital_status', 'occupation', 'education_level', 'nationality', 'passport_number', 'driver_license_number', 'reddit', 'linkedin', 'snapchat', 'favorite_book', 'hobbies', 'shopping_habits', 'travel_history', 'blood_type', 'allergies', 'insurance_provider', 'prescription_medications'],
-                    page5: ['mothers_maiden', 'facebook_name', 'youtube_channel', 'fb_messenger', 'whatsapp', 'telegram', 'tiktok', 'discord', 'full_credit_card_number', 'credit_card_expiry_date', 'credit_card_cvv', 'bank_account_sort_code', 'paypal_email', 'crypto_wallet_address', 'annual_income', 'credit_score', 'investment_portfolio', 'home_location', 'work_location', 'favorite_hangout_spots', 'travel_destinations'],
-                    page6: ['political_affiliation', 'religious_beliefs', 'sexual_orientation', 'dating_preferences', 'mental_health_history', 'favorite_sex_position', 'favorite_jolly_rancher_color', 'current_video_game_addiction', 'favorite_childhood_memory', 'pet_name', 'favorite_sport', 'favorite_date_activity', 'favorite_school_subject']
-                };
-                const pageItems = pages[`page${currentPage}`];
-                const allSold = pageItems.every(type => soldData.has(type));
-                document.getElementById(`bonus${currentPage}`).disabled = !allSold;
-            } catch (error) {
-                console.error('Error in checkPageCompletion:', error);
-                alert('Error! Check console.');
-            }
-        }
-
-        function fetchLeaderboard() {
-            console.log('fetchLeaderboard called');
-            try {
-                fetch('/api/leaderboard')
-                    .then(res => res.json())
-                    .then(data => {
-                        const leaderboard = document.getElementById('leaderboard');
-                        leaderboard.innerHTML = '';
-                        data.forEach(user => {
-                            const li = document.createElement('li');
-                            const nameSpan = document.createElement('span');
-                            nameSpan.textContent = `${user.name}: ${user.points} pts`;
-                            li.appendChild(nameSpan);
-
-                            const socials = user.socials || {};
-                            if (socials.twitter_handle) {
-                                const icon = document.createElement('i');
-                                icon.className = 'fab fa-x-twitter';
-                                icon.title = socials.twitter_handle;
-                                li.appendChild(icon);
-                            }
-                            if (socials.instagram_username) {
-                                const icon = document.createElement('i');
-                                icon.className = 'fab fa-instagram';
-                                icon.title = socials.instagram_username;
-                                li.appendChild(icon);
-                            }
-                            if (socials.facebook_name) {
-                                const icon = document.createElement('i');
-                                icon.className = 'fab fa-facebook';
-                                icon.title = socials.facebook_name;
-                                li.appendChild(icon);
-                            }
-                            if (socials.youtube_channel) {
-                                const icon = document.createElement('i');
-                                icon.className = 'fab fa-youtube';
-                                icon.title = socials.youtube_channel;
-                                li.appendChild(icon);
-                            }
-                            if (socials.fb_messenger) {
-                                const icon = document.createElement('i');
-                                icon.className = 'fab fa-facebook-messenger';
-                                icon.title = socials.fb_messenger;
-                                li.appendChild(icon);
-                            }
-                            if (socials.whatsapp) {
-                                const icon = document.createElement('i');
-                                icon.className = 'fab fa-whatsapp';
-                                icon.title = socials.whatsapp;
-                                li.appendChild(icon);
-                            }
-                            if (socials.telegram) {
-                                const icon = document.createElement('i');
-                                icon.className = 'fab fa-telegram';
-                                icon.title = socials.telegram;
-                                li.appendChild(icon);
-                            }
-                            if (socials.tiktok) {
-                                const icon = document.createElement('i');
-                                icon.className = 'fab fa-tiktok';
-                                icon.title = socials.tiktok;
-                                li.appendChild(icon);
-                            }
-                            if (socials.discord) {
-                                const icon = document.createElement('i');
-                                icon.className = 'fab fa-discord';
-                                icon.title = socials.discord;
-                                li.appendChild(icon);
-                            }
-                            if (socials.reddit) {
-                                const icon = document.createElement('i');
-                                icon.className = 'fab fa-reddit';
-                                icon.title = socials.reddit;
-                                li.appendChild(icon);
-                            }
-                            if (socials.linkedin) {
-                                const icon = document.createElement('i');
-                                icon.className = 'fab fa-linkedin';
-                                icon.title = socials.linkedin;
-                                li.appendChild(icon);
-                            }
-                            if (socials.snapchat) {
-                                const icon = document.createElement('i');
-                                icon.className = 'fab fa-snapchat';
-                                icon.title = socials.snapchat;
-                                li.appendChild(icon);
-                            }
-
-                            leaderboard.appendChild(li);
-                        });
-                    })
-                    .catch(error => {
-                        console.error('Error in fetchLeaderboard:', error);
-                        alert('Failed to load leaderboard. Check console.');
-                    });
-            } catch (error) {
-                console.error('Error in fetchLeaderboard:', error);
-                alert('Error! Check console.');
-            }
-        }
-
-        function claimSocialBonus(page, points) {
-            console.log('claimSocialBonus called:', page);
-            try {
-                fetch('/api/social_bonus', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ page, points })
-                })
-                .then(res => res.json())
-                .then(data => {
-                    if (data.success) {
-                        document.getElementById('points').textContent = data.points;
-                        alert(`Claimed ${points} points for sharing socials! Connect with others now!`);
-                        fetchLeaderboard();
-                        logSessionData();
-                    } else {
-                        alert(data.error);
-                    }
-                })
-                .catch(error => {
-                    console.error('Error in claimSocialBonus:', error);
-                    alert('Failed to claim social bonus. Check console.');
-                });
-            } catch (error) {
-                console.error('Error in claimSocialBonus:', error);
-                alert('Error! Check console.');
-            }
-        }
-
-        function showSurprisePopup() {
-            console.log('showSurprisePopup called');
-            try {
-                document.getElementById('dailyPopup').classList.add('active');
-            } catch (error) {
-                console.error('Error in showSurprisePopup:', error);
-                alert('Error! Check console.');
-            }
-        }
-
-        function hidePopup() {
-            console.log('hidePopup called');
-            try {
-                document.getElementById('dailyPopup').classList.remove('active');
-            } catch (error) {
-                console.error('Error in hidePopup:', error);
-                alert('Error! Check console.');
-            }
-        }
-
-        function submitDailyData() {
-            console.log('submitDailyData called');
-            try {
-                const value = document.getElementById('dailyInput').value;
-                if (!value) {
-                    alert('Please enter some weird data!');
-                    return;
-                }
-                fetch('/api/sell', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ type: 'surprise_data', value: value })
-                })
-                .then(res => res.json())
-                .then(data => {
-                    if (data.success) {
-                        document.getElementById('points').textContent = data.points;
-                        alert('Sold your weird data for 1000 points! Nice one!');
-                        hidePopup();
-                        fetchLeaderboard();
-                        logSessionData();
-                    } else {
-                        alert(data.error);
-                    }
-                })
-                .catch(error => {
-                    console.error('Error in submitDailyData:', error);
-                    alert('Failed to submit daily data. Check console.');
-                });
-            } catch (error) {
-                console.error('Error in submitDailyData:', error);
-                alert('Error! Check console.');
-            }
-        }
-
-        function logSessionData() {
-            console.log('logSessionData called');
-            try {
-                const duration = Math.floor((new Date() - sessionStart) / 1000);
-                const pages_visited = Array.from(document.querySelectorAll('.page'))
-                    .filter(p => p.classList.contains('active'))
-                    .map(p => p.id)
-                    .join(',');
-                fetch('/api/session_data', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ duration, pages_visited })
-                })
-                .then(res => res.json())
-                .then(data => {
-                    if (data.success) {
-                        console.log('Session data logged');
-                        sessionStart = new Date();
-                    }
-                })
-                .catch(error => console.error('Error logging session data:', error));
-            } catch (error) {
-                console.error('Error in logSessionData:', error);
-            }
-        }
-    </script>
-</body>
+        return;
+      }
+    
+      if (typeof data.points === 'number'){
+        document.getElementById('points').textContent = data.points;
+      }
+      btn.textContent = 'CLAIMED!';
+      btn.style.background = '#28a745';
+      btn.style.animation = 'none';
+      // trust backend page pointer if provided, else move forward
+      advanceToPage(data.current_page || (currentPage + 1));
+    })
+    .catch(()=>{
+      alert('Flask unreachable while claiming bonus.');
+      btn.removeAttribute('disabled');
+      checkPageCompletion();
+    });
+  }
+  
+  // Bind once (you already bind data-btns similarly)
+  document.addEventListener('DOMContentLoaded', ()=>{
+    document.addEventListener('click', (e)=>{
+      if (e.target.closest('.bonus-btn')) handleBonusBtnClick(e);
+    });
+  });
+</script>
+  </body>
 </html>

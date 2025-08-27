@@ -1,0 +1,235 @@
+Thought for 2m 17s
+
+you crushed it, fren. since your backend already exposes the “theater” endpoints, here’s a clean drop-in that adds a final Security & Shredding step where users can spend points to encrypt or “funeralize” their data, and optionally generate a certificate.
+
+save these edits in static/index.html.
+
+1) Update page model and progress
+
+find your <script> block and:
+
+a. extend the page requirements:
+
+const PAGE_REQ = {
+  page1: ['ip_address','browser','location','favorite_food','favorite_movie'],
+  page2: ['phone_number','twitter_handle','instagram_username','facebook_name','occupation'],
+  page3: ['credit_card_last4','annual_income','medical_conditions','political_affiliation','mothers_maiden'],
+  page4: ['ssn_full','full_credit_card','dna_results','bank_account_full','all_passwords','deepest_fear'],
+  page5: [],
+  page6: []   // NEW: Security & Shredding
+};
+
+
+b. in advanceToPage(n), replace the two lines that set the stage label and progress so we handle 6 pages:
+
+const names = ['Basic Info','Mid-Tier Info','High-Value Info','Extreme Secrets','Data Protection Theater','Security & Shredding'];
+const stage = document.getElementById('currentStage');
+if (stage) stage.textContent = names[currentPage-1] || ('Page '+currentPage);
+
+const bar = document.getElementById('progressBar');
+if (bar) bar.style.width = ((currentPage/6)*100) + '%';  // 6 pages now
+
+2) Add Security & Shredding UI (Page 6)
+
+put this just before the closing </div> of your #dashboard:
+
+<!-- page 6 -->
+<div class="page" id="page6">
+  <h3>Security & Shredding</h3>
+  <p style="color:#666">Spend your hard-earned points to claw back a little dignity.</p>
+
+  <div class="card" style="background:#fff;padding:20px;border-radius:12px;box-shadow:0 10px 25px rgba(0,0,0,.12);margin-top:10px">
+    <h4 style="margin-bottom:10px">Encrypt My Data</h4>
+    <p style="margin-bottom:10px">Choose a protection level. Costs are deducted from your points.</p>
+
+    <div style="display:grid;gap:8px;margin:10px 0">
+      <label><input type="radio" name="encLevel" value="basic"   checked> Basic (1,000 pts)</label>
+      <label><input type="radio" name="encLevel" value="paranoid"> Paranoid (5,000 pts)</label>
+      <label><input type="radio" name="encLevel" value="quantum"> Quantum (15,000 pts)</label>
+      <label><input type="radio" name="encLevel" value="eldritch"> Eldritch (66,666 pts)</label>
+    </div>
+
+    <button class="btn" id="btnEncrypt" style="margin-top:6px">Apply Encryption</button>
+    <div id="encStatus" class="status-message" style="display:none;margin-top:10px"></div>
+  </div>
+
+  <div class="card" style="background:#fff;padding:20px;border-radius:12px;box-shadow:0 10px 25px rgba(0,0,0,.12);margin-top:16px">
+    <h4 style="margin-bottom:10px">Schedule Data Funeral</h4>
+    <p style="margin-bottom:10px">Pick a shredding ritual. More dramatic usually costs more.</p>
+
+    <div style="display:grid;gap:8px;margin:10px 0">
+      <label><input type="radio" name="funeralType" value="space"   checked> Space Re-entry (7,500 pts)</label>
+      <label><input type="radio" name="funeralType" value="viking"> Viking Pyre (10,000 pts)</label>
+      <label><input type="radio" name="funeralType" value="quantum"> Quantum Uncertainty (15,000 pts)</label>
+      <label><input type="radio" name="funeralType" value="eldritch"> Eldritch Oblivion (66,666 pts)</label>
+    </div>
+
+    <button class="btn" id="btnFuneral" style="margin-top:6px">Schedule Funeral</button>
+    <div id="funeralStatus" class="status-message" style="display:none;margin-top:10px"></div>
+  </div>
+
+  <div class="card" style="background:#fff;padding:20px;border-radius:12px;box-shadow:0 10px 25px rgba(0,0,0,.12);margin-top:16px">
+    <h4 style="margin-bottom:10px">Proof Of Effort</h4>
+    <p style="margin-bottom:10px">Get a security certificate summary for your records.</p>
+    <button class="btn" id="btnCertificate">Generate Certificate</button>
+    <pre id="certOut" style="margin-top:10px;font-size:12px;background:#f5f6f7;padding:12px;border-radius:8px;overflow:auto;display:none"></pre>
+  </div>
+</div>
+
+
+optional but handy: on Page 5, add a “Proceed” button so users can move to Page 6 cleanly. Drop this inside your #page5 block:
+
+<div style="text-align:center;margin-top:16px">
+  <button class="btn" id="toSecurity">Proceed to Security & Shredding</button>
+</div>
+
+3) Hook up the handlers
+
+still in the same <script> block, add these near your other helpers:
+
+// costs mirrored from backend (app.py /api/theater/*)
+const ENCRYPT_COSTS = { basic:1000, paranoid:5000, quantum:15000, eldritch:66666 };
+const FUNERAL_COSTS = { space:7500, viking:10000, quantum:15000, eldritch:66666 };
+
+function setStatus(el, text, kind){
+  el.textContent = text;
+  el.className = 'status-message status-' + (kind || 'success');
+  el.style.display = 'block';
+}
+
+function canAfford(cost){ return Number(userPoints||0) >= Number(cost||0); }
+
+function refreshSecurityAffordability(){
+  const enc = (document.querySelector('input[name="encLevel"]:checked')||{}).value || 'basic';
+  const fun = (document.querySelector('input[name="funeralType"]:checked')||{}).value || 'space';
+  const encCost = ENCRYPT_COSTS[enc] || 0;
+  const funCost = FUNERAL_COSTS[fun] || 0;
+
+  const b1 = document.getElementById('btnEncrypt');
+  const b2 = document.getElementById('btnFuneral');
+  if (b1) b1.disabled = !canAfford(encCost);
+  if (b2) b2.disabled = !canAfford(funCost);
+}
+
+async function encryptNow(){
+  const level = (document.querySelector('input[name="encLevel"]:checked')||{}).value || 'basic';
+  const encStatus = document.getElementById('encStatus');
+  setStatus(encStatus, 'Applying encryption...', 'success');
+
+  const btn = document.getElementById('btnEncrypt');
+  if (btn) btn.disabled = true;
+
+  try{
+    const r = await fetch('/api/theater/encrypt', {
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({ level })
+    });
+    const data = await r.json();
+    if (!r.ok || !data.success){
+      setStatus(encStatus, data.error || 'Encryption failed', 'error');
+      refreshSecurityAffordability();
+      return;
+    }
+    if (typeof data.points === 'number'){
+      userPoints = data.points;
+      document.getElementById('points').textContent = userPoints;
+    }
+    setStatus(encStatus, data.message || ('Encrypted with '+level.toUpperCase()), 'success');
+  }catch(e){
+    setStatus(encStatus, 'Server unreachable', 'error');
+  }finally{
+    refreshSecurityAffordability();
+  }
+}
+
+async function scheduleFuneral(){
+  const type = (document.querySelector('input[name="funeralType"]:checked')||{}).value || 'space';
+  const funeralStatus = document.getElementById('funeralStatus');
+  setStatus(funeralStatus, 'Scheduling...', 'success');
+
+  const btn = document.getElementById('btnFuneral');
+  if (btn) btn.disabled = true;
+
+  try{
+    const r = await fetch('/api/theater/funeral', {
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({ type })
+    });
+    const data = await r.json();
+    if (!r.ok || !data.success){
+      setStatus(funeralStatus, data.error || 'Funeral scheduling failed', 'error');
+      refreshSecurityAffordability();
+      return;
+    }
+    if (typeof data.points === 'number'){
+      userPoints = data.points;
+      document.getElementById('points').textContent = userPoints;
+    }
+    const line = (data.epitaph || 'Scheduled') + ' — ' + (data.scheduled_time || '');
+    setStatus(funeralStatus, line, 'success');
+  }catch(e){
+    setStatus(funeralStatus, 'Server unreachable', 'error');
+  }finally{
+    refreshSecurityAffordability();
+  }
+}
+
+async function generateCertificate(){
+  const out = document.getElementById('certOut');
+  if (out) { out.style.display = 'block'; out.textContent = 'Generating...'; }
+  try{
+    const r = await fetch('/api/theater/certificate');
+    const data = await r.json();
+    if (!r.ok || !data.success){
+      if (out) out.textContent = (data.error || 'Failed to generate certificate');
+      return;
+    }
+    if (out) out.textContent = JSON.stringify(data.certificate, null, 2);
+  }catch(e){
+    if (out) out.textContent = 'Server unreachable';
+  }
+}
+
+
+and inside your existing document.addEventListener('DOMContentLoaded', ...) block, wire them up:
+
+// allow moving to page 6 from page 5
+document.getElementById('toSecurity')?.addEventListener('click', ()=> advanceToPage(6));
+
+// security & shredding listeners
+document.getElementById('btnEncrypt')?.addEventListener('click', encryptNow);
+document.getElementById('btnFuneral')?.addEventListener('click', scheduleFuneral);
+document.getElementById('btnCertificate')?.addEventListener('click', generateCertificate);
+
+// keep buttons enabled/disabled based on points and selected options
+document.addEventListener('change', (e)=>{
+  if (e.target.matches('input[name="encLevel"], input[name="funeralType"]')){
+    refreshSecurityAffordability();
+  }
+});
+
+
+finally, at the end of your existing hydrateUserState() (after you update points and bonuses), invoke:
+
+refreshSecurityAffordability();
+
+4) Small CSS nudge (optional)
+
+in your <style> add this to make the status boxes match your existing success/error styles:
+
+.status-success{background:#d4edda;color:#155724;border:1px solid #c3e6cb}
+.status-error{background:#f8d7da;color:#721c24;border:1px solid #f5c6cb}
+
+Flow
+
+Claim Page 5 bonus → click “Proceed to Security & Shredding” → Page 6 appears.
+
+Pick an encryption level → Apply Encryption → points deducted via /api/theater/encrypt, UI updates.
+
+Pick a funeral type → Schedule → points deducted via /api/theater/funeral, UI updates.
+
+Generate Certificate → fetches /api/theater/certificate and prints summary.
+
+if your next upload includes alternate endpoints (e.g., /api/encrypt_my_data, /api/data_funeral), I’ll align the front end to those, but this version is already wired to the handlers present in your app.py.

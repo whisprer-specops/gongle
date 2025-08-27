@@ -173,6 +173,20 @@ body {
     left: 0;
 }
 
+.data-btn{
+  padding:10px 16px;border:none;border-radius:8px;background:#4285f4;color:#fff;cursor:pointer;
+  position:relative; z-index:1; pointer-events:auto;
+}
+
+.btn, .bonus-btn, .data-btn {
+  position: relative;
+  z-index: 1;
+  pointer-events: auto;
+}
+.bonus-btn[disabled] { opacity: .55; cursor: not-allowed; }
+
+.data-btn[disabled]{opacity:.55; cursor:not-allowed}
+
 /* Loading animations */
 .loading-dots {
     display: inline-block;

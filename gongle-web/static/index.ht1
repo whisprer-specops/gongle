@@ -1,0 +1,565 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gongle - Where your data goes to party before being sold!"</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: Arial, sans-serif;
+            background: #fff;
+            color: #333;
+            min-height: 100vh;
+            position: relative;
+        }
+
+        /* Connection Status */
+        .connection-status {
+            position: fixed;
+            top: 10px;
+            right: 10px;
+            padding: 8px 12px;
+            border-radius: 15px;
+            font-size: 12px;
+            font-weight: bold;
+            z-index: 2000;
+            transition: all 0.3s;
+        }
+
+        .connection-online {
+            background: #d4edda;
+            color: #155724;
+        }
+
+        .connection-offline {
+            background: #f8d7da;
+            color: #721c24;
+        }
+
+        /* Homepage Styles */
+        .homepage {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .logo {
+            font-size: 90px;
+            font-weight: normal;
+            margin-bottom: 30px;
+            font-family: 'Arial', sans-serif;
+            cursor: pointer;
+            transition: transform 0.3s;
+        }
+
+        .logo:hover {
+            transform: scale(1.05);
+        }
+
+        .logo span:nth-child(1) { color: #4285f4; }
+        .logo span:nth-child(2) { color: #ea4335; }
+        .logo span:nth-child(3) { color: #fbbc05; }
+        .logo span:nth-child(4) { color: #4285f4; }
+        .logo span:nth-child(5) { color: #34a853; }
+        .logo span:nth-child(6) { color: #ea4335; }
+
+        .search-box {
+            width: 100%;
+            max-width: 600px;
+            border: 1px solid #dfe1e5;
+            border-radius: 24px;
+            padding: 10px 20px;
+            font-size: 16px;
+            outline: none;
+            transition: box-shadow 0.3s;
+        }
+
+        .search-box:focus {
+            box-shadow: 0 1px 6px rgba(32,33,36,.28);
+        }
+
+        .consent, .email-form, .dashboard { display: none; width: 80%; max-width: 800px; padding: 20px; background: white; border-radius: 10px; box-shadow: 0 0 10px rgba(0,0,0,0.1); margin-top: 20px; }
+        .consent.active, .email-form.active, .dashboard.active { display: block; }
+        .data-btn { padding: 5px 10px; margin: 5px; background: #34a853; color: white; border: none; border-radius: 3px; cursor: pointer; }
+        .data-btn:hover { background: #2d8e47; }
+        .data-btn:disabled { background: #ccc; cursor: not-allowed; }
+        .page { display: none; }
+        .page.active { display: block; }
+        .progress { margin-bottom: 20px; }
+        .bonus-btn { background: #fbbc05; }
+        .bonus-btn:hover { background: #e0a800; }
+        .social-btn { background: #9b59b6; color: white; }
+        .social-btn:hover { background: #8e44ad; }
+        input[type="text"], input[type="email"] { padding: 5px; margin: 5px; width: 200px; }
+        .warning { color: #ea4335; font-weight: bold; }
+        .leaderboard li { display: flex; align-items: center; }
+        .leaderboard i { margin-left: 5px; font-size: 16px; }
+        .fa-x-twitter { color: #000; }
+        .fa-instagram { color: #E1306C; }
+        .fa-facebook { color: #4267B2; }
+        .fa-youtube { color: #FF0000; }
+        .fa-facebook-messenger { color: #0084FF; }
+        .fa-whatsapp { color: #25D366; }
+        .fa-telegram { color: #0088cc; }
+        .fa-tiktok { color: #000; }
+        .fa-discord { color: #5865F2; }
+        .fa-reddit { color: #FF4500; }
+        .fa-linkedin { color: #0077B5; }
+        .fa-snapchat { color: #FFFC00; }
+        .popup { display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: white; padding: 20px; border-radius: 10px; box-shadow: 0 0 10px rgba(0,0,0,0.1); z-index: 1000; }
+        .popup.active { display: block; }
+
+        .btn { 
+            background: #4285f4; 
+            color: white; 
+            border: none; 
+            padding: 10px 20px; 
+            border-radius: 4px; 
+            cursor: pointer; 
+            margin: 10px; 
+            font-size: 14px;
+        }
+        .btn:hover { background: #3367d6; }
+    </style>
+</head>
+<body>
+    <!-- Connection Status Indicator -->
+    <div id="connectionStatus" class="connection-status connection-offline">
+        🔴 Server Check...
+    </div>
+
+    <!-- Landing Page -->
+    <div class="homepage" id="landing">
+        <div class="logo" onclick="showConsent()">
+            <span>G</span><span>o</span><span>n</span><span>g</span><span>l</span><span>e</span>
+        </div>
+        <div>How much of you will you sell today?</div>
+        <input type="text" class="search-box" id="searchBox" placeholder="Search Gongle..." onclick="showConsent()" readonly>
+        <div class="buttons" style="margin-top: 20px;">
+            <button class="btn" id="enterGongleBtn" onclick="showConsent()">Enter Gongle</button>
+        </div>
+    </div>
+
+    <!-- Consent Popup -->
+    <div class="consent" id="consent">
+        <h2>Terms and Conditions</h2>
+            <h3>GONGLE DATA HARVESTING AGREEMENT</h3>
+            <p><strong>Last Updated: May 25, 2025</strong></p>
+            
+            <h4>1. ACCEPTANCE OF TERMS</h4>
+            <p>By clicking "I Agree" below, you acknowledge that you have read, understood, and agree to be bound by these Terms and Conditions. You understand that this is a legally binding contract.</p>
+            
+            <h4>2. NATURE OF SERVICE</h4>
+            <p>Gongle is a data collection platform that explicitly monetizes user-provided personal information. By using this service, you acknowledge and consent to:</p>
+            <ul>
+                <li>The collection, storage, and sale of any data you provide</li>
+                <li>The permanent retention of this data</li>
+                <li>The unlimited commercial use of your data</li>
+                <li>The sharing of your data with third parties, including but not limited to: advertisers, data brokers, marketing firms, government agencies, and any other interested parties</li>
+            </ul>
+            
+            <h4>3. DATA RIGHTS</h4>
+            <p>By providing data to Gongle, you irrevocably transfer all rights to this information. You acknowledge that:</p>
+            <ul>
+                <li>You have no right to request deletion of data once submitted</li>
+                <li>You cannot revoke consent after data submission</li>
+                <li>Your data may be combined with other sources to create detailed profiles</li>
+                <li>Your data may be used for purposes including but not limited to: targeted advertising, credit decisions, employment screening, insurance underwriting, and law enforcement</li>
+            </ul>
+            
+            <h4>4. POINTS SYSTEM</h4>
+            <p>The points awarded for data submission have no monetary value and cannot be exchanged for any goods, services, or currency. Points are purely for gamification purposes.</p>
+            
+            <h4>5. LIABILITY</h4>
+            <p>Gongle assumes no liability for any consequences arising from the use of your data by third parties, including but not limited to: identity theft, financial loss, reputational damage, or emotional distress.</p>
+            
+            <h4>6. ACCURACY OF DATA</h4>
+            <p>You certify that all data provided is accurate and that you have the legal right to share this information. Providing false information may result in account termination but will not result in data deletion.</p>
+            
+            <h4>7. MODIFICATION OF TERMS</h4>
+            <p>Gongle reserves the right to modify these terms at any time without notice. Continued use of the service constitutes acceptance of modified terms.</p>
+            
+            <h4>8. GOVERNING LAW</h4>
+            <p>These terms are governed by the laws of the Cayman Islands. Any disputes will be resolved through binding arbitration.</p>
+            
+            <h4>9. ENTIRE AGREEMENT</h4>
+            <p>This constitutes the entire agreement between you and Gongle. No verbal agreements or promises are binding.</p>
+        <p>Welcome to Gongle! By proceeding, you agree to let us harvest your data and sell it to the highest bidder—all for some shiny, worthless points!</p>
+        <label><input type="checkbox" id="consent1"> I agree to sell my soul for points</label><br>
+        <label><input type="checkbox" id="consent2"> I understand this is a joke but my data's still up for grabs</label><br>
+        <button class="btn" onclick="agree()">I Agree - Harvest My Data</button>
+    </div>
+
+    <!-- Email Input Form -->
+    <div class="email-form" id="emailForm">
+        <h2>Enter your email to join the fun</h2>
+        <p>(Yup, we're grabbing this too!)</p>
+        <input type="email" id="emailInput" placeholder="your@email.com">
+        <button class="btn" onclick="submitEmail()">Submit</button>
+        <div id="emailStatus" style="margin-top: 10px; padding: 10px; border-radius: 5px; display: none;"></div>
+    </div>
+
+    <!-- Dashboard -->
+    <div class="dashboard" id="dashboard">
+        <h2>Welcome, <span id="username">User</span>!</h2>
+        <p>Your Points: <span id="points">0</span></p>
+        <div class="progress">Current Page: <span id="currentPage">Basic Info</span></div>
+
+        <!-- Basic Info Page -->
+        <div class="page active" id="page1">
+            <h3>Basic Info (Page 1)</h3>
+            <div><button class="data-btn" data-type="ip_address" onclick="sellData('ip_address', 'IP Address', 10, false)">IP Address (10 pts)</button></div>
+            <div><button class="data-btn" data-type="browser" onclick="sellData('browser', 'Browser Info', 5, false)">Browser Info (5 pts)</button></div>
+            <div><button class="data-btn" data-type="location" onclick="sellData('location', 'Current Location', 20, false)">Current Location (20 pts)</button></div>
+            <div><input type="text" id="favorite_food" placeholder="Favorite Food"><button class="data-btn" data-type="favorite_food" onclick="sellData('favorite_food', 'Favorite Food', 60, true)">Favorite Food (60 pts)</button></div>
+            <div><input type="text" id="favorite_movie" placeholder="Favorite Movie"><button class="data-btn" data-type="favorite_movie" onclick="sellData('favorite_movie', 'Favorite Movie', 70, true)">Favorite Movie (70 pts)</button></div>
+            <div><button class="bonus-btn" onclick="claimBonus('page1', 200)" disabled id="bonus1">Claim 200pt Bonus</button></div>
+        </div>
+
+        <h3>Leaderboard</h3>
+        <ul id="leaderboard" class="leaderboard"></ul>
+    </div>
+
+    <script>
+        console.log('🎭 Gongle Script loaded');
+        let currentPage = 1;
+        let soldData = new Set();
+        let sessionStart = new Date();
+        let serverConnected = false;
+
+        // Check server connection
+        function checkServerConnection() {
+            fetch('/api/health')
+                .then(response => response.json())
+                .then(data => {
+                    serverConnected = true;
+                    updateConnectionStatus(true);
+                })
+                .catch(error => {
+                    serverConnected = false;
+                    updateConnectionStatus(false);
+                });
+        }
+
+        // Update connection status
+        function updateConnectionStatus(connected) {
+            const statusDiv = document.getElementById('connectionStatus');
+            if (connected) {
+                statusDiv.textContent = '🟢 Flask Connected';
+                statusDiv.className = 'connection-status connection-online';
+            } else {
+                statusDiv.textContent = '🔴 Flask Offline';
+                statusDiv.className = 'connection-status connection-offline';
+            }
+        }
+
+        function showConsent() {
+            console.log('🎪 showConsent called');
+            if (!serverConnected) {
+                alert('⚠️ Flask server not running!\n\nStart server with: python app.py\nThen refresh this page.');
+                return;
+            }
+            
+            try {
+                const landing = document.getElementById('landing');
+                const consent = document.getElementById('consent');
+                if (!landing || !consent) {
+                    console.error('Elements not found:', { landing, consent });
+                    return;
+                }
+                landing.style.display = 'none';
+                consent.classList.add('active');
+            } catch (error) {
+                console.error('Error in showConsent:', error);
+            }
+        }
+
+        function agree() {
+            console.log('📋 agree called');
+            try {
+                if (document.getElementById('consent1').checked && document.getElementById('consent2').checked) {
+                    document.getElementById('consent').classList.remove('active');
+                    document.getElementById('emailForm').classList.add('active');
+                } else {
+                    alert('You must check both boxes to proceed');
+                }
+            } catch (error) {
+                console.error('Error in agree:', error);
+            }
+        }
+
+        function submitEmail() {
+            console.log('📧 submitEmail called');
+            const emailInput = document.getElementById('emailInput');
+            const statusDiv = document.getElementById('emailStatus');
+            const email = emailInput.value;
+            
+            if (!email || !email.includes('@')) {
+                showEmailStatus('Please enter a valid email!', 'error');
+                return;
+            }
+
+            emailInput.disabled = true;
+            showEmailStatus('Creating account... 🎪', 'info');
+
+            fetch('/api/create_account', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ email })
+            })
+            .then(res => res.json())
+            .then(data => {
+                if (data.success) {
+                    document.getElementById('username').textContent = email.split('@')[0];
+                    document.getElementById('points').textContent = data.points || 50;
+                    document.getElementById('emailForm').classList.remove('active');
+                    document.getElementById('dashboard').classList.add('active');
+
+                    // Initialize dashboard
+                    initializeDashboard();
+                } else {
+                    showEmailStatus(data.error || 'Failed to create account', 'error');
+                    emailInput.disabled = false;
+                }
+            })
+            .catch(error => {
+                console.error('submitEmail error:', error);
+                showEmailStatus('Connection failed! Check if Flask server is running.', 'error');
+                emailInput.disabled = false;
+            });
+        }
+
+        function showEmailStatus(message, type) {
+            const statusDiv = document.getElementById('emailStatus');
+            statusDiv.textContent = message;
+            statusDiv.style.display = 'block';
+            statusDiv.style.background = type === 'error' ? '#f8d7da' : type === 'info' ? '#d1ecf1' : '#d4edda';
+            statusDiv.style.color = type === 'error' ? '#721c24' : type === 'info' ? '#0c5460' : '#155724';
+        }
+
+        function initializeDashboard() {
+            // Load sold data
+            fetch('/api/get_sold_data')
+                .then(res => res.json())
+                .then(data => {
+                    if (data.success) {
+                        data.sold_data.forEach(type => {
+                            soldData.add(type);
+                            const button = document.querySelector(`button.data-btn[data-type="${type}"]`);
+                            if (button) button.disabled = true;
+                        });
+                    }
+                    fetchLeaderboard();
+                    checkPageCompletion();
+                    
+                    // Daily bonus
+                    fetch('/api/daily_bonus', { method: 'POST' })
+                        .then(res => res.json())
+                        .then(data => {
+                            if (data.success) {
+                                document.getElementById('points').textContent = data.points;
+                                if (data.points_added > 0) {
+                                    alert(`Daily login bonus: ${data.points_added} points!`);
+                                }
+                            }
+                        });
+                        
+                    // Auto-collect client data
+                    collectClientData();
+                })
+                .catch(error => {
+                    console.error('Dashboard init error:', error);
+                });
+        }
+
+        function collectClientData() {
+            const browserDetails = `${navigator.appName} ${navigator.appVersion}`;
+            const screenSize = `${screen.width}x${screen.height}`;
+            
+            let plugins = [];
+            if (navigator.plugins && navigator.plugins.length) {
+                for (let i = 0; i < navigator.plugins.length; i++) {
+                    plugins.push(navigator.plugins[i].name);
+                }
+            }
+            
+            let canvasFingerprint = 'N/A';
+            try {
+                const canvas = document.createElement('canvas');
+                const ctx = canvas.getContext('2d');
+                ctx.textBaseline = 'top';
+                ctx.font = '14px Arial';
+                ctx.fillText('Gongle fingerprint test', 2, 2);
+                canvasFingerprint = canvas.toDataURL().substring(0, 50);
+            } catch (e) {
+                console.error('Canvas fingerprint failed:', e);
+            }
+
+            fetch('/api/collect_client_data', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    browser_details: browserDetails,
+                    screen_size: screenSize,
+                    plugins: plugins.join(', '),
+                    canvas_fingerprint: canvasFingerprint
+                })
+            })
+            .then(res => res.json())
+            .then(data => {
+                if (data.success && data.points_added > 0) {
+                    document.getElementById('points').textContent = data.points;
+                    setTimeout(() => {
+                        alert(`🎁 Auto-collected ${data.points_added} points of browser data!`);
+                    }, 1000);
+                }
+            })
+            .catch(error => console.error('Client data collection error:', error));
+        }
+
+        function sellData(type, name, points, requiresInput) {
+            console.log('💰 sellData called:', type);
+            if (soldData.has(type)) {
+                alert(`You already sold ${name}! Try something else.`);
+                return;
+            }
+            
+            let value = name;
+            if (requiresInput) {
+                const input = document.getElementById(type);
+                value = input.value;
+                if (!value) {
+                    alert(`Please enter your ${name}`);
+                    return;
+                }
+            } else if (type === 'ip_address') {
+                value = 'Auto-collected';
+            } else if (type === 'browser') {
+                value = navigator.userAgent;
+            } else if (type === 'location' || type === 'week_location') {
+                navigator.geolocation.getCurrentPosition(
+                    pos => {
+                        value = `${pos.coords.latitude},${pos.coords.longitude}`;
+                        sendSellRequest(type, value, points, name);
+                    },
+                    err => {
+                        console.error('Geolocation error:', err);
+                        const manual = prompt('Location access denied. Enter coordinates (lat,lon):');
+                        if (manual && manual.match(/^-?\d+\.?\d*,-?\d+\.?\d*$/)) {
+                            value = manual;
+                            sendSellRequest(type, value, points, name);
+                        }
+                    }
+                );
+                return;
+            }
+            sendSellRequest(type, value, points, name);
+        }
+
+        function sendSellRequest(type, value, points, name) {
+            fetch('/api/sell', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ type, value })
+            })
+            .then(res => res.json())
+            .then(data => {
+                if (data.success) {
+                    soldData.add(type);
+                    document.getElementById('points').textContent = data.points;
+                    const button = document.querySelector(`button.data-btn[data-type="${type}"]`);
+                    if (button) button.disabled = true;
+                    alert(`Sold ${name} for ${points} points! 🎉`);
+                    checkPageCompletion();
+                    fetchLeaderboard();
+                } else {
+                    alert(data.error);
+                }
+            })
+            .catch(error => {
+                console.error('Sell request error:', error);
+                alert('Connection error! Is Flask server running?');
+            });
+        }
+
+        function claimBonus(page, points) {
+            fetch('/api/claim_bonus', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ page, points })
+            })
+            .then(res => res.json())
+            .then(data => {
+                if (data.success) {
+                    document.getElementById('points').textContent = data.points;
+                    document.getElementById(`bonus${page.replace('page', '')}`).disabled = true;
+                    alert(`Claimed ${points} bonus points!`);
+                    fetchLeaderboard();
+                } else {
+                    alert(data.error);
+                }
+            })
+            .catch(error => {
+                console.error('Bonus claim error:', error);
+                alert('Connection error!');
+            });
+        }
+
+        function checkPageCompletion() {
+            const pageItems = ['ip_address', 'browser', 'location', 'favorite_food', 'favorite_movie'];
+            const allSold = pageItems.every(type => soldData.has(type));
+            document.getElementById('bonus1').disabled = !allSold;
+        }
+
+        function fetchLeaderboard() {
+            fetch('/api/leaderboard')
+                .then(res => res.json())
+                .then(data => {
+                    const leaderboard = document.getElementById('leaderboard');
+                    leaderboard.innerHTML = '';
+                    data.forEach(user => {
+                        const li = document.createElement('li');
+                        const nameSpan = document.createElement('span');
+                        nameSpan.textContent = `${user.name}: ${user.points} pts`;
+                        li.appendChild(nameSpan);
+
+                        const socials = user.socials || {};
+                        const socialTypes = ['twitter_handle', 'instagram_username', 'facebook_name', 'youtube_channel'];
+                        const iconClasses = ['fa-x-twitter', 'fa-instagram', 'fa-facebook', 'fa-youtube'];
+                        
+                        socialTypes.forEach((social, index) => {
+                            if (socials[social]) {
+                                const icon = document.createElement('i');
+                                icon.className = `fab ${iconClasses[index]}`;
+                                icon.title = socials[social];
+                                li.appendChild(icon);
+                            }
+                        });
+
+                        leaderboard.appendChild(li);
+                    });
+                })
+                .catch(error => {
+                    console.error('Leaderboard error:', error);
+                });
+        }
+
+        // Initialize everything
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('🎭 DOM loaded, checking server...');
+            checkServerConnection();
+            setInterval(checkServerConnection, 10000); // Check every 10 seconds
+        });
+    </script>
+</body>
+</html>
